@@ -23,6 +23,7 @@ use Diffrakt\Core\Middleware;
 use Diffrakt\Core\Request;
 use Diffrakt\Core\Response;
 use Diffrakt\Core\Router;
+use Diffrakt\Core\Session;
 use Diffrakt\Controllers\AuthController;
 use Diffrakt\Controllers\FeedController;
 use Diffrakt\Controllers\FilterController;
@@ -78,13 +79,22 @@ if (is_file($envFile)) {
 Database::getInstance();
 
 // ---------------------------------------------------------------------------
-// 3. Build Request
+// 3. Start session
+//
+// Must run after DB is connected (the handler needs PDO) and before the
+// router dispatches (controllers may read $_SESSION immediately).
+// ---------------------------------------------------------------------------
+
+Session::start();
+
+// ---------------------------------------------------------------------------
+// 4. Build Request
 // ---------------------------------------------------------------------------
 
 $request = new Request();
 
 // ---------------------------------------------------------------------------
-// 4. Register routes and dispatch
+// 5. Register routes and dispatch
 //
 // Route format: Router::add(method, pattern, [ControllerClass, method], $auth)
 //
@@ -127,7 +137,7 @@ $router->add('POST', '/api/v1/pipelines/{id}/apply', [PipelineController::class,
 $router->add('GET', '/api/v1/feed', [FeedController::class, 'index'], true);
 
 // ---------------------------------------------------------------------------
-// 5. Dispatch
+// 6. Dispatch
 //
 // Router::dispatch() matches the request against the route table, runs
 // Middleware if the route requires auth, instantiates the controller, and
