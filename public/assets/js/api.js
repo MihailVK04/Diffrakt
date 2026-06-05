@@ -1,5 +1,4 @@
 const BASE_URL = '/api/v1';
-const TOKEN_KEY = 'diffrakt_token';
 
 // ---------------------------------------------------------------------------
 // Token store
@@ -13,13 +12,6 @@ const TOKEN_KEY = 'diffrakt_token';
 // rest of the code never changes.
 // ---------------------------------------------------------------------------
 
-let _token = null;
-
-const tokenStore = {
-    get() { return _token},
-    set(t) { _token = t; },
-    clear() { _token = null; },
-};
 
 async function _request(method, path, body = null, opts = {}) {
     const headers = {};
@@ -32,6 +24,7 @@ async function _request(method, path, body = null, opts = {}) {
     const init = {
         method,
         headers,
+        credentials: 'include',
         signal: opts.signal ?? null,
     };
 
@@ -76,33 +69,20 @@ const del = (path, opts) => _request('DELETE', path, null, opts);
 const auth = {
 
     async register(username, email, password) {
-        const data = await post('/auth/register', { username, email, password });
-        tokenStore.set(data.token);
-        return data;
+        return post('/auth/register', { username, email, password });
     },
 
     async login(email, password) {
-        const data = await post('/auth/login', { email, password });
-        tokenStore.set(data.token);
-        return data;
+        return post('/auth/login', { email, password });
     },
 
     async logout() {
-        try {
-            await post('/auth/logout');
-        } finally {
-            tokenStore.clear();
-        }
+        return post('/auth/logout');
     },
 
     me() {
         return get('/auth/me');
     },
-
-    getToken: () => tokenStore.get(),
-    setToken: (t) => tokenStore.set(t),
-    clearToken: () => tokenStore.clear(),
-    isLoggedIn: () => tokenStore.get() !== null,
 };
 
 const users = {
@@ -187,7 +167,7 @@ const pipelines = {
     },
 
     create(name) {
-        return post('/pipelines/', { name });
+        return post('/pipelines', { name });
     },
 
     replaceSteps(id, steps) {
