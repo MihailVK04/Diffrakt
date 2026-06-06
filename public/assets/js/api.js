@@ -1,25 +1,7 @@
 const BASE_URL = '/api/v1';
 
-// ---------------------------------------------------------------------------
-// Token store
-//
-// The token lives only in memory (a plain JS variable) for the lifetime of the
-// tab. On hard reload the user must log in again — this is intentional and safe
-// because storing JWTs in localStorage exposes them to XSS.
-//
-// If you need persistence across reloads (e.g. "remember me"), swap
-// _tokenStore for a sessionStorage or localStorage backed version here — the
-// rest of the code never changes.
-// ---------------------------------------------------------------------------
-
-
 async function _request(method, path, body = null, opts = {}) {
     const headers = {};
-
-    const token = tokenStore.get();
-    if (token) {
-        headers['Authorization'] = 'Bearer ${token}';
-    }
 
     const init = {
         method,
@@ -35,7 +17,7 @@ async function _request(method, path, body = null, opts = {}) {
         init.body = JSON.stringify(body);
     }
 
-    const response = await fetch('${BASE_URL}${path}', init);
+    const response = await fetch(`${BASE_URL}${path}`, init);
 
     let data;
     try {
@@ -53,7 +35,7 @@ async function _request(method, path, body = null, opts = {}) {
 
 class ApiError extends Error {
     constructor(status, data) {
-        super(data?.error ?? 'HTTP ${status}');
+        super(data?.error ?? `HTTP ${status}`);
         this.status = status;
         this.errors = data?.errors ?? {};
         this.data = data;
@@ -88,7 +70,7 @@ const auth = {
 const users = {
 
     getProfile(username) {
-        return get('/users/${encodeURIComponent(username)}');
+        return get(`/users/${encodeURIComponent(username)}`);
     },
 
     updateMe({ bio, avatar } = {}) {
@@ -106,11 +88,11 @@ const users = {
     },
 
     follow(username) {
-        return post('/users/${encodeURIComponent(username)}/follow');
+        return post(`/users/${encodeURIComponent(username)}/follow`);
     },
 
     unfollow(username) {
-        return del('/users/${encodeURIComponent(username)}/follow');
+        return del(`/users/${encodeURIComponent(username)}/follow`);
     },
 };
 
@@ -125,19 +107,19 @@ const posts = {
     },
 
     get(id) {
-        return get('/posts/${id}');
+        return get(`/posts/${id}`);
     },
 
     update(id, fields) {
-        return patch('/posts/${id}', fields);
+        return patch(`/posts/${id}`, fields);
     },
 
     delete(id) {
-        return del('/posts/${id}');
+        return del(`/posts/${id}`);
     },
 
     export(postId, pipelineId) {
-        return post('/posts/${postId}/export', { pipeline_id: pipelineId });
+        return post(`/posts/${postId}/export`, { pipeline_id: pipelineId });
     },
 };
 
@@ -148,7 +130,7 @@ const filters = {
     },
 
     get(id) {
-        return get('/filters/${id}');
+        return get(`/filters/${id}`);
     },
 
     create(name, pipelineId) {
@@ -156,14 +138,14 @@ const filters = {
     },
 
     delete(id) {
-        return del('/filters/${id}');
+        return del(`/filters/${id}`);
     },
 };
 
 const pipelines = {
 
     get(id) {
-        return get('/pipelines/${id}');
+        return get(`/pipelines/${id}`);
     },
 
     create(name) {
@@ -171,23 +153,23 @@ const pipelines = {
     },
 
     replaceSteps(id, steps) {
-        return put('/pipelines/${id}/steps', steps);
+        return put(`/pipelines/${id}/steps`, steps);
     },
 
     delete(id) {
-        return del('/pipelines/${id}');
+        return del(`/pipelines/${id}`);
     },
 
     apply(id, imageB64, signal) {
-        return post('/pipelines/${id}/apply', { image_b64: imageB64 }, { signal });
+        return post(`/pipelines/${id}/apply`, { image_b64: imageB64 }, { signal });
     },
 };
 
 const feed = {
     
     get(cursor = null) {
-        const qs = cursor !== null ? '?cursor=${cursor}' : '';
-        return get('/feed${qs}');
+        const qs = cursor !== null ? `?cursor=${cursor}` : '';
+        return get(`/feed${qs}`);
     },
 };
 
