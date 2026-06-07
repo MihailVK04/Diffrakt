@@ -15,17 +15,17 @@ class User {
         );
     }
 
-    public static function findByUsername(string $username): ?array {
+    public static function findForAuth(string $usernameOrEmail): ?array {
         return Database::getInstance()->fetchOne(
-            'SELECT id, username, email, password_hash, avatar_path FROM users WHERE username = ?',
-            [$username]
+            'SELECT id, username, email, password_hash FROM users WHERE email = ? OR username = ?',
+            [$usernameOrEmail, $usernameOrEmail]
         );
     }
 
-    public static function findByEmail(string $email): ?array {
+    public static function findByUsername(string $username): ?array {
         return Database::getInstance()->fetchOne(
-            'SELECT id, username, email, password_hash FROM users WHERE email = ?',
-            [$email]
+            'SELECT id, username, email, avatar_path, bio, created_at FROM users WHERE username = ?',
+            [$username]
         );
     }
 
