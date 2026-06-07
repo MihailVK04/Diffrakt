@@ -18,14 +18,15 @@ class PipelineStep {
     public static function replaceSteps(int $pipelineId, array $steps): void {
         $db = Database::getInstance();
         
-       
+        $db->execute('DELETE FROM pipeline_steps WHERE pipeline_id = ?', [$pipelineId]);
+
         foreach ($steps as $index => $step) {
             $db->execute(
                 'INSERT INTO pipeline_steps (pipeline_id, step_order, filter_id, sub_pipeline_id, params) 
                  VALUES (?, ?, ?, ?, ?)',
                 [
                     $pipelineId,
-                    $index,
+                    $index + 1,
                     $step['filter_id'] ?? null,
                     $step['sub_pipeline_id'] ?? null,
                     isset($step['params']) ? json_encode($step['params']) : null
