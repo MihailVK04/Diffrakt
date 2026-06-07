@@ -46,4 +46,11 @@ class User {
             [$avatarPath, $id]
         );
     }
+
+    public static function updateEmail(int $id, string $email): int {
+        return Database::getInstance()->execute(
+            'UPDATE users SET email = ? WHERE id = ?',
+            [$email, $id]
+        );
+    }
 }
