@@ -116,6 +116,7 @@ $router->add('GET', '/api/v1/users/{username}', [UserController::class, 'profile
 $router->add('PATCH', '/api/v1/users/me', [UserController::class, 'update'], true);
 $router->add('POST', '/api/v1/users/{username}/follow', [UserController::class, 'follow'], true);
 $router->add('DELETE', '/api/v1/users/{username}/follow', [UserController::class, 'unfollow'], true);
+$router->add('GET', '/api/v1/users/{username}/posts', [UserController::class, 'getPosts'], false);
 
 $router->add('POST', '/api/v1/posts', [PostController::class, 'upload'], true);
 $router->add('GET', '/api/v1/posts/{id}', [PostController::class, 'get'], false);

@@ -94,6 +94,11 @@ const users = {
     unfollow(username) {
         return del(`/users/${encodeURIComponent(username)}/follow`);
     },
+
+    getPosts(username, cursor = null) {
+        const qs = cursor !== null ? `?cursor=${cursor}` : '';
+        return get(`/users/${encodeURIComponent(username)}/posts${qs}`);
+    },
 };
 
 const posts = {
