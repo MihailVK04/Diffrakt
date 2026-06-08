@@ -49,7 +49,7 @@ class PipelineRunner {
             return;
         }
 
-        $image = imagecreatefromjpeg($absolutePath);
+        $image = imagecreatefromstring(file_get_contents($absolutePath));
         if (!$image) {
             throw new \RuntimeException('Failed to load image for processing.');
         }
@@ -69,6 +69,6 @@ class PipelineRunner {
         }
 
         imagejpeg($image, $absolutePath, 90);
-        //imagedestroy($image);
+        imagedestroy($image);
     }
 }

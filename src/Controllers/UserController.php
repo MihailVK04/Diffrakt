@@ -36,7 +36,7 @@ class UserController {
         $followingCount = $db->fetchOne('SELECT COUNT(*) as count FROM follows WHERE follower_id = ?', [$user['id']])['count'] ?? 0;
 
         $user['is_following'] = $isFollowing;
-        $user['followers_count'] = (int)$followersCount;
+        $user['follower_count'] = (int)$followersCount;
         $user['following_count'] = (int)$followingCount;
 
         Response::json(['user' => $user]);
@@ -82,6 +82,40 @@ class UserController {
             $db->execute('UPDATE users SET bio = ? WHERE id = ?', [$data['bio'], $request->userId()]);
         }
 
+        $avatarFile = $request->file('avatar');
+        if ($avatarFile !== null) {
+            $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            $mime = mime_content_type($avatarFile['tmp_name']);
+
+            if (!in_array($mime, $allowed, true)) {
+                Response::unprocessable(['avatar' => 'Avatar must be a JPEG, PNG, WebP, or GIF.']);
+            }
+
+            if ($avatarFile['size'] > 5 * 1024 * 1024) {
+                Response::unprocessable(['avatar' => 'Avatar must be under 5 MB.']);
+            }
+
+            $ext = match($mime) {
+                'image/jpeg' => 'jpg',
+                'image/png'  => 'png',
+                'image/webp' => 'webp',
+                'image/gif'  => 'gif',
+            };
+
+            $filename = bin2hex(random_bytes(16)) . '.' . $ext;
+            $storagePath = ($_ENV['STORAGE_PATH'] ?? getenv('STORAGE_PATH') ?: ROOT_PATH . '/storage');
+            $dest = $storagePath . '/avatars/' . $filename;
+
+            if (!move_uploaded_file($avatarFile['tmp_name'], $dest)) {
+                Response::serverError('Could not save avatar.');
+            }
+
+            $db->execute(
+                'UPDATE users SET avatar_path = ? WHERE id = ?',
+                ['/avatars/' . $filename, $request->userId()]
+            );
+        }
+        
         if (isset($data['email'])) {
             $emailErrors = Validator::validate($data, ['email' => ['required', 'email']]);
             if (!empty($emailErrors)) {

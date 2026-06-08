@@ -38,6 +38,11 @@ class AuthController {
                 'password_hash' => $passwordHash
             ]);
 
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $userId;
+            $_SESSION['username'] = $data['username'];
+            $_SESSION['email'] = $data['email'];
+
             Response::json([
                 'message' => 'You sign up successfully.',
                 'user'    => ['id' => $userId, 'username' => $data['username'], 'email' => $data['email']]
