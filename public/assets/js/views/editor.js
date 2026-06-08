@@ -56,7 +56,7 @@ const FILTER_META_BY_ID = Object.fromEntries(FILTERS_META.map(f => [f.id, f]));
 
 const PREVIEW_DEBOUNCE_MS = 120;
  
-export default class EditorView {
+export class EditorView {
  
     constructor(container, params) {
         this._container = container;
@@ -89,6 +89,8 @@ export default class EditorView {
         this._bindSave();
         this._bindExport();
         this._bindSaveFilter();
+        this._stepList.addEventListener('click', this._onStepAction.bind(this));
+        this._stepList.addEventListener('input', this._onParamInput.bind(this));
  
         if (this._postId) {
             await this._loadPost(this._postId);
@@ -233,8 +235,6 @@ export default class EditorView {
 </li>`;
         }).join('');
  
-        this._stepList.addEventListener('click',  this._onStepAction.bind(this), { once: true });
-        this._stepList.addEventListener('input',  this._onParamInput.bind(this), { once: true });
     }
  
     _buildParamControlHTML(stepIndex, paramMeta, currentValue) {

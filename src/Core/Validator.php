@@ -69,7 +69,7 @@ class Validator {
             'integer' => self::checkInteger($label, $value),
             'min' => self::checkMin($label, $value, (float) $param),
             'max' => self::checkMax($label, $value, (float) $param),
-            default => null,
+            default => throw new \InvalidArgumentException("Unknown validation rule: {$ruleName}"),
         };
     }
 
@@ -135,11 +135,11 @@ class Validator {
         }
 
         if (!is_numeric($value)) {
-            return "{$value} must be a number.";
+            return "{$label} must be a number.";
         }
 
         if ((float) $value < $min) {
-            return "{$value} must be at least {$min}.";
+            return "{$label} must be at least {$min}.";
         }
 
         return null;
@@ -151,18 +151,18 @@ class Validator {
         }
 
         if (!is_numeric($value)) {
-            return "{$value} must be a number.";
+            return "{$label} must be a number.";
         }
 
         if ((float) $value > $max) {
-            return "{$value} must not exceed {$max}.";
+            return "{$label} must not exceed {$max}.";
         }
 
         return null;
     }
 
     private static function label(string $field): string {
-        return ucfirst(str_replace('_', ' ', $field));
+        return ucwords(str_replace('_', ' ', $field));
     }
 }
 ?>

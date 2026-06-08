@@ -87,4 +87,50 @@ class PipelineController {
             Response::badRequest('Pipeline processing failed: ' . $e->getMessage());
         }
     }
+
+    public function preview(Request $request): void {
+        $pipelineId = (int)($request->params['id'] ?? 0);
+        $data = $request->body() ?? [];
+        $imageB64 = $data['image_b64'] ?? '';
+
+        if ($imageB64 === '') {
+            Response::badRequest('Missing image_b64 in request body.');
+        }
+
+        $pipeline = Pipeline::findById($pipelineId);
+        if (!$pipeline) Response::notFound('Pipeline not found.');
+
+        $imageData = base64_decode($imageB64, strict: true);
+        if ($imageData === false) {
+            Response::badRequest('Invalid base64 image data.');
+        }
+
+        $tmpPath = sys_get_temp_dir() . '/' . bin2hex(random_bytes(8)) . '.jpg';
+        if (file_put_contents($tmpPath, $imageData) === false) {
+            Response::serverError('Failed to write temporary image.');
+        }
+
+        try {
+            $runner = new PipelineRunner(new StorageService());
+            $processedRelativePath = $runner->run($tmpPath, $pipelineId);
+
+            $processedData = file_get_contents($processedRelativePath);
+            if ($processedData === false) {
+                Response::serverError('Failed to read processed image.');
+            }
+
+            $resultB64 = base64_encode($processedData);
+
+            Response::json([
+                'message' => 'Preview generated successfully.',
+                'image_b64' => $resultB64
+            ]);
+        } catch (\Exception $e) {
+            Response::badRequest('Pipeline processing failed: ' . $e->getMessage());
+        } finally {
+            if (file_exists($tmpPath)) {
+                unlink($tmpPath);
+            }
+        }
+    }
 }

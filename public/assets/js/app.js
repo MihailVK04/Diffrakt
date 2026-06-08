@@ -40,6 +40,7 @@ const ROUTES = [
 
 let _currentView = null;
 let _currentUser = null;
+let _userFetched = false;
 
 async function fetchCurrentUser() {
     try {
@@ -52,6 +53,7 @@ async function fetchCurrentUser() {
 
 async function refreshUser() {
     _currentUser = await fetchCurrentUser();
+    _userFetched = true;
     return _currentUser;
 }
 
@@ -98,11 +100,12 @@ async function renderRoute(pathname) {
     const { route, params } = matched;
 
     if (route.auth) {
-        if (_currentUser === null) {
+        if (!_userFetched) {
             _currentUser = await fetchCurrentUser();
+            _userFetched = true;
         }
         if (!_currentUser) {
-            navigate('/', { authRequired: true });
+            navigate('/');
             return;
         }
     }
@@ -135,12 +138,10 @@ function renderNotFound(container) {
 }
 
 function renderError(container, err) {
-    container.innerHTML = `
-        <div class="app-error">
-            <h2>Something went wrong</h2>
-            <p>${err.message ?? 'Unknown error'}</p>
-        </div>
-    `;
+    const msg = document.createElement('p');
+    msg.textContent = err.message ?? 'Unknown error';
+    container.innerHTML = '<div class="app-error"><h2>Something went wrong</h2></div>';
+    container.querySelector('.app-error').appendChild(msg);
 }
 
 function navigate(path, _state = {}) {

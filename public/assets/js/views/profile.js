@@ -39,7 +39,7 @@
 
 import api from '../api.js';
 
-export default class ProfileView {
+export class ProfileView {
 
     constructor(container, params) {
         this._container = container;

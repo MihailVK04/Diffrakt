@@ -19,7 +19,7 @@
 declare(strict_types=1);
 
 use Diffrakt\Core\Database;
-use Diffrakt\Core\Middleware;
+use Diffrakt\Core\RateLimiter;
 use Diffrakt\Core\Request;
 use Diffrakt\Core\Response;
 use Diffrakt\Core\Router;
@@ -76,7 +76,7 @@ if (is_file($envFile)) {
 // which index.php catches and converts to a JSON 500.
 // ---------------------------------------------------------------------------
 
-Database::getInstance();
+$pdo = Database::getInstance()->getPdo();
 
 // ---------------------------------------------------------------------------
 // 3. Start session
@@ -105,39 +105,41 @@ $request = new Request();
 // $auth = false → Public route (no JWT check).
 // ---------------------------------------------------------------------------
 
-$router = new Router($request);
+$rateLimiter = new RateLimiter($pdo);
 
-$router->add('POST', '/api/v1/auth/register', [AuthController::class, 'register'], false);
-$router->add('POST', '/api/v1/auth/login', [AuthController::class, 'login'], false);
-$router->add('POST', '/api/v1/auth/logout', [AuthController::class, 'logout'], true);
-$router->add('GET', '/api/v1/auth/me', [AuthController::class, 'me'], true);
+$router = new Router($request, $rateLimiter);
 
-$router->add('GET', '/api/v1/users/{username}', [UserController::class, 'profile'], false);
+$router->add('POST', '/api/v1/auth/register', [AuthController::class, 'register'], false, ['endpoint' => 'auth.register', 'max' => 5, 'window' => 60]);
+$router->add('POST', '/api/v1/auth/login', [AuthController::class, 'login'], false, ['endpoint' => 'auth.login', 'max' => 10, 'window' => 60]);
+$router->add('POST', '/api/v1/auth/logout', [AuthController::class, 'logout'], true, null);
+$router->add('GET', '/api/v1/auth/me', [AuthController::class, 'me'], true, null);
+
+$router->add('GET', '/api/v1/users/{username}', [UserController::class, 'profile'], false, null);
 // НОВ РЕД ЗА SPEC 005: Endpoint за снимките на потребителя с пагинация
-$router->add('GET', '/api/v1/users/{username}/posts', [UserController::class, 'posts'], false);
-$router->add('PATCH', '/api/v1/users/me', [UserController::class, 'update'], true);
-$router->add('POST', '/api/v1/users/{username}/follow', [UserController::class, 'follow'], true);
-$router->add('DELETE', '/api/v1/users/{username}/follow', [UserController::class, 'unfollow'], true);
-$router->add('GET', '/api/v1/users/{username}/posts', [UserController::class, 'getPosts'], false);
+$router->add('PATCH', '/api/v1/users/me', [UserController::class, 'update'], true, null);
+$router->add('GET', '/api/v1/users/{username}/posts', [UserController::class, 'posts'], false, null);
+$router->add('POST', '/api/v1/users/{username}/follow', [UserController::class, 'follow'], true, null);
+$router->add('DELETE', '/api/v1/users/{username}/follow', [UserController::class, 'unfollow'], true, null);
 
-$router->add('POST', '/api/v1/posts', [PostController::class, 'upload'], true);
-$router->add('GET', '/api/v1/posts/{id}', [PostController::class, 'get'], false);
-$router->add('PATCH', '/api/v1/posts/{id}', [PostController::class, 'update'], true);
-$router->add('DELETE', '/api/v1/posts/{id}', [PostController::class, 'delete'], true);
-$router->add('POST', '/api/v1/posts/{id}/export', [PostController::class, 'export'], true);
+$router->add('POST', '/api/v1/posts', [PostController::class, 'upload'], true, ['endpoint' => 'posts.upload', 'max' => 20, 'window' => 60]);
+$router->add('GET', '/api/v1/posts/{id}', [PostController::class, 'get'], false, null);
+$router->add('PATCH', '/api/v1/posts/{id}', [PostController::class, 'update'], true, null);
+$router->add('DELETE', '/api/v1/posts/{id}', [PostController::class, 'delete'], true, null);
+$router->add('POST', '/api/v1/posts/{id}/export', [PostController::class, 'export'], true, null);
 
-$router->add('GET', '/api/v1/filters', [FilterController::class, 'list'], false);
-$router->add('GET', '/api/v1/filters/{id}', [FilterController::class, 'get'], false);
-$router->add('POST', '/api/v1/filters/', [FilterController::class, 'create'], true);
-$router->add('DELETE', '/api/v1/filters/{id}', [FilterController::class, 'delete'], true);
+$router->add('GET', '/api/v1/filters', [FilterController::class, 'list'], false, null);
+$router->add('GET', '/api/v1/filters/{id}', [FilterController::class, 'get'], false, null);
+$router->add('POST', '/api/v1/filters', [FilterController::class, 'create'], true, null);
+$router->add('DELETE', '/api/v1/filters/{id}', [FilterController::class, 'delete'], true, null);
 
-$router->add('POST', '/api/v1/pipelines', [PipelineController::class, 'create'], true);
-$router->add('GET', '/api/v1/pipelines/{id}', [PipelineController::class, 'get'], false);
-$router->add('PUT', '/api/v1/pipelines/{id}/steps', [PipelineController::class, 'replaceSteps'], true);
-$router->add('DELETE', '/api/v1/pipelines/{id}', [PipelineController::class, 'delete'], true);
-$router->add('POST', '/api/v1/pipelines/{id}/apply', [PipelineController::class, 'apply'], true);
+$router->add('POST', '/api/v1/pipelines', [PipelineController::class, 'create'], true, null);
+$router->add('GET', '/api/v1/pipelines/{id}', [PipelineController::class, 'get'], false, null);
+$router->add('PUT', '/api/v1/pipelines/{id}/steps', [PipelineController::class, 'replaceSteps'], true, null);
+$router->add('DELETE', '/api/v1/pipelines/{id}', [PipelineController::class, 'delete'], true, null);
+$router->add('POST', '/api/v1/pipelines/{id}/apply', [PipelineController::class, 'apply'], true, ['endpoint' => 'pipelines.apply', 'max' => 20, 'window' => 60]);       // existing — post_id
+$router->add('POST', '/api/v1/pipelines/{id}/preview', [PipelineController::class, 'preview'], true, ['endpoint' => 'pipelines.preview', 'max' => 60, 'window' => 60]);   // new — image_b64
 
-$router->add('GET', '/api/v1/feed', [FeedController::class, 'index'], true);
+$router->add('GET', '/api/v1/feed', [FeedController::class, 'index'], true, null);
 
 // ---------------------------------------------------------------------------
 // 6. Dispatch

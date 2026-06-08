@@ -31,7 +31,7 @@
 
 import api from '../api.js';
 
-export default class FeedView {
+export class FeedView {
 
     constructor(container, params) {
         this._container = container;

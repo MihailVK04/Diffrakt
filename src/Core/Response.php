@@ -99,7 +99,7 @@ class Response {
             $mime = finfo_file($finfo, $path);
             finfo_close($finfo);
 
-            if ($mime !== false && mime !== 'application/octet-stream') {
+            if ($mime !== false && $mime !== 'application/octet-stream') {
                 return $mime;
             }
         }
