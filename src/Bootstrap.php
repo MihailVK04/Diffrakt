@@ -6,11 +6,11 @@
  * Wired up by public/index.php after autoloading is registered.
  *
  * Responsibilities (in order):
- *   1. Load environment variables from .env (if the file exists and values
- *      are not already set — Docker may inject them directly).
- *   2. Establish the database connection (singleton via Database::getInstance).
- *   3. Build the Request object from the current HTTP context.
- *   4. Instantiate the Router, register every route, and dispatch.
+ * 1. Load environment variables from .env (if the file exists and values
+ * are not already set — Docker may inject them directly).
+ * 2. Establish the database connection (singleton via Database::getInstance).
+ * 3. Build the Request object from the current HTTP context.
+ * 4. Instantiate the Router, register every route, and dispatch.
  *
  * This file never returns — every code path ends with Response::json() (which
  * calls exit) or an uncaught exception that index.php's catch block handles.
@@ -113,6 +113,8 @@ $router->add('POST', '/api/v1/auth/logout', [AuthController::class, 'logout'], t
 $router->add('GET', '/api/v1/auth/me', [AuthController::class, 'me'], true);
 
 $router->add('GET', '/api/v1/users/{username}', [UserController::class, 'profile'], false);
+// НОВ РЕД ЗА SPEC 005: Endpoint за снимките на потребителя с пагинация
+$router->add('GET', '/api/v1/users/{username}/posts', [UserController::class, 'posts'], false);
 $router->add('PATCH', '/api/v1/users/me', [UserController::class, 'update'], true);
 $router->add('POST', '/api/v1/users/{username}/follow', [UserController::class, 'follow'], true);
 $router->add('DELETE', '/api/v1/users/{username}/follow', [UserController::class, 'unfollow'], true);
