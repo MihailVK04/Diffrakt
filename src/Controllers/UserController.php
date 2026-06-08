@@ -4,58 +4,128 @@ declare(strict_types=1);
 
 namespace Diffrakt\Controllers;
 
-use Diffrakt\Core\Database;
 use Diffrakt\Core\Request;
 use Diffrakt\Core\Response;
+use Diffrakt\Core\Validator;
+use Diffrakt\Core\Database;
 use Diffrakt\Models\User;
 use Diffrakt\Models\Post;
 
 class UserController {
 
     public function profile(Request $request): void {
-        $user = User::findByUsername($request->params['username'] ?? '');
-        if (!$user) Response::notFound('User not found.');
+        $username = $request->params['username'] ?? '';
+        $user = User::findByUsername($username);
+        
+        if (!$user) {
+            Response::notFound('User not found.');
+        }
 
-        $followers = Database::getInstance()->fetchOne('SELECT COUNT(*) as count FROM follows WHERE followed_id = ?', [$user['id']]);
-        $user['followers'] = $followers['count'];
+        $db = Database::getInstance();
+        $isFollowing = false;
+        
+        if ($request->userId()) {
+            $row = $db->fetchOne(
+                'SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?',
+                [$request->userId(), $user['id']]
+            );
+            $isFollowing = (bool)$row;
+        }
+
+        $followersCount = $db->fetchOne('SELECT COUNT(*) as count FROM follows WHERE followee_id = ?', [$user['id']])['count'] ?? 0;
+        $followingCount = $db->fetchOne('SELECT COUNT(*) as count FROM follows WHERE follower_id = ?', [$user['id']])['count'] ?? 0;
+
+        $user['is_following'] = $isFollowing;
+        $user['followers_count'] = (int)$followersCount;
+        $user['following_count'] = (int)$followingCount;
+
         Response::json(['user' => $user]);
     }
 
     public function posts(Request $request): void {
-        $user = User::findByUsername($request->params['username'] ?? '');
-        if (!$user) Response::notFound('User not found.');
+        $username = $request->params['username'] ?? '';
+        $user = User::findByUsername($username);
 
-        $cursor = $request->input('cursor');
-        $posts = Post::getUserPosts((int)$user['id'], $cursor ? (int)$cursor : null);
+        if (!$user) {
+            Response::notFound('User not found.');
+        }
 
-        // ФИКС: Връщаме next_cursor за улеснение на фронтенда
+        $cursor = isset($_GET['cursor']) ? (int)$_GET['cursor'] : null;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+
+        $posts = Post::getUserPosts((int)$user['id'], $cursor, $limit);
+        
+        $nextCursor = null;
+        if (count($posts) === $limit) {
+            $nextCursor = (int)end($posts)['id'];
+        }
+
         Response::json([
-            'message' => 'User posts retrieved.', 
             'posts' => $posts,
-            'next_cursor' => !empty($posts) ? end($posts)['id'] : null
+            'next_cursor' => $nextCursor
         ]);
     }
 
     public function update(Request $request): void {
         $data = $request->body() ?? [];
-        if (isset($data['email'])) User::updateEmail($request->userId(), $data['email']);
-        Response::json(['message' => 'Profile updated.']);
+        $errors = Validator::validate($data, [
+            'bio' => ['max_length:500']
+        ]);
+
+        if (!empty($errors)) {
+            Response::unprocessable($errors);
+        }
+
+        $db = Database::getInstance();
+        
+        if (isset($data['bio'])) {
+            $db->execute('UPDATE users SET bio = ? WHERE id = ?', [$data['bio'], $request->userId()]);
+        }
+
+        if (isset($data['email'])) {
+            $emailErrors = Validator::validate($data, ['email' => ['required', 'email']]);
+            if (!empty($emailErrors)) {
+                Response::unprocessable($emailErrors);
+            }
+            User::updateEmail($request->userId(), $data['email']);
+        }
+
+        Response::json(['message' => 'Profile updated successfully.']);
     }
 
     public function follow(Request $request): void {
-        $target = User::findByUsername($request->params['username'] ?? '');
-        if (!$target) Response::notFound('Target user not found.');
-        if ($request->userId() === (int)$target['id']) Response::badRequest('Cannot follow self.');
+        $username = $request->params['username'] ?? '';
+        $userToFollow = User::findByUsername($username);
 
-        Database::getInstance()->execute('INSERT IGNORE INTO follows (follower_id, followed_id) VALUES (?, ?)', [$request->userId(), $target['id']]);
-        Response::json(['message' => "Following."]);
+        if (!$userToFollow) {
+            Response::notFound('User not found.');
+        }
+
+        if ((int)$userToFollow['id'] === $request->userId()) {
+            Response::badRequest('You cannot follow yourself.');
+        }
+
+        Database::getInstance()->execute(
+            'INSERT IGNORE INTO follows (follower_id, followee_id) VALUES (?, ?)',
+            [$request->userId(), $userToFollow['id']]
+        );
+
+        Response::json(['message' => 'Followed successfully.']);
     }
 
     public function unfollow(Request $request): void {
-        $target = User::findByUsername($request->params['username'] ?? '');
-        if ($target) {
-            Database::getInstance()->execute('DELETE FROM follows WHERE follower_id = ? AND followed_id = ?', [$request->userId(), $target['id']]);
+        $username = $request->params['username'] ?? '';
+        $userToUnfollow = User::findByUsername($username);
+
+        if (!$userToUnfollow) {
+            Response::notFound('User not found.');
         }
-        Response::json(['message' => "Unfollowed."]);
+
+        Database::getInstance()->execute(
+            'DELETE FROM follows WHERE follower_id = ? AND followee_id = ?',
+            [$request->userId(), $userToUnfollow['id']]
+        );
+
+        Response::json(['message' => 'Unfollowed successfully.']);
     }
 }
