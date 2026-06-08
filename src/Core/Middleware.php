@@ -26,14 +26,6 @@ class Middleware {
         }
     }
 
-    public function userId(): int {
-        return (int) $_SESSION['user_id'];
-    }
-
-    public function username(): string {
-        return (string) ($_SESSION['username'] ?? '');
-    }
-
     public function rateLimit(string $endpoint, int $maxRequests = 60, int $windowSeconds = 60): void {
         $this->rateLimiter->check($endpoint, $maxRequests, $windowSeconds);
     }

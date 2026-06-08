@@ -16,7 +16,7 @@
 
 import api from '../api.js';
 
-export default class HomeView {
+export class HomeView {
 
     constructor(container, params) {
         this._container = container;

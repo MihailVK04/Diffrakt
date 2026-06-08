@@ -25,6 +25,7 @@ namespace Diffrakt\Core;
 class Request {
 
     public array $params = [];
+    private ?array $bodyCache = null;
 
     public function method(): string {
         return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -53,21 +54,28 @@ class Request {
     }
 
     public function body(): ?array {
+        if ($this->bodyCache !== null) {
+            return $this->bodyCache;
+        }
+
         $contentType = $this->header('Content-Type') ?? '';
 
         if (str_contains($contentType, 'application/json')) {
             $raw = file_get_contents('php://input');
 
             if ($raw === false || $raw === '') {
-                return [];
+                $this->bodyCache = [];
+                return $this->bodyCache;
             }
 
             $decode = json_decode($raw, associative: true);
 
-            return is_array($decode) ? $decode : null;
+            $this->bodyCache = is_array($decode) ? $decode : [];
+            return $this->bodyCache;
         }
 
-        return $_POST ?? [];
+        $this->bodyCache = $_POST ?? [];
+        return $this->bodyCache;
     }
 
     public function input(string $key, mixed $default = null): mixed {
@@ -111,10 +119,14 @@ class Request {
     }
 
     public function ip(): string {
-        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
 
-        if ($forwarded !== null) {
-            return trim(explode(',', $forwarded)[0]);
+        $isProduction = ($_ENV['APP_ENV'] ?? getenv('APP_ENV')) === 'production';
+        
+        if ($isProduction) {
+            $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
+            if ($forwarded !== null) {
+                return trim(explode(',', $forwarded)[0]);
+            }
         }
 
         return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -124,6 +136,10 @@ class Request {
         $id = $_SESSION['user_id'] ?? null;
 
         return $id !== null ? (int) $id : null;
+    }
+
+    public function username(): string {
+        return (string) ($_SESSION['username'] ?? '');
     }
 
     public function setParams(array $params): void {
