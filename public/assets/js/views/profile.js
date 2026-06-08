@@ -211,7 +211,16 @@ export class ProfileView {
                 }
 
             } catch (err) {
+                btn.dataset.following = String(following);
+                btn.textContent = following ? 'Unfollow' : 'Follow';
+                btn.classList.toggle('btn--secondary', following);
+                btn.classList.toggle('btn--primary', !following);
 
+                const countEl = this._container.querySelector('[id="profile-follower-count"]');
+                if (countEl) {
+                    const current = parseInt(countEl.textContent, 10);
+                    countEl.textContent = following ? current + 1 : current - 1;
+                }
             } finally {
                 btn.disabled = false;
             }
