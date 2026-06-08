@@ -45,10 +45,6 @@ class RateLimiter {
         $this->pdo = $pdo;
     }
 
-    public static function create(): self {
-        return new self(Database::getInstance()->getPdo());
-    }
-
     public function check(string $endpoint, int $maxRequests = 60, int $windowSeconds = 60): void {
         $ipHash  = $this->hashIp($this->clientIp());
         $current = $this->upsert($ipHash, $endpoint, $windowSeconds);
@@ -63,16 +59,16 @@ class RateLimiter {
             INSERT INTO rate_limits (ip_hash, endpoint, requests, window_start)
             VALUES (:ip_hash, :endpoint, 1, NOW())
             ON DUPLICATE KEY UPDATE
-                requests = IF(TIMESTAMPDIFF(SECOND, window_start, NOW()) >= :window_reset, 1, requests + 1),
-                window_start = IF(TIMESTAMPDIFF(SECOND, window_start, NOW()) >= :window_slide, NOW(), window_start)
+                requests     = IF(TIMESTAMPDIFF(SECOND, window_start, NOW()) >= :window_a, 1, requests + 1),
+                window_start = IF(TIMESTAMPDIFF(SECOND, window_start, NOW()) >= :window_b, NOW(), window_start)
         ';
- 
+        
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'ip_hash' => $ipHash,
+            'ip_hash'  => $ipHash,
             'endpoint' => $endpoint,
-            'window_reset' => $windowSeconds,
-            'window_slide' => $windowSeconds,
+            'window_a' => $windowSeconds,
+            'window_b' => $windowSeconds,
         ]);
 
         $fetch = $this->pdo->prepare(
@@ -84,12 +80,15 @@ class RateLimiter {
     }
 
     private function clientIp(): string {
-        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
- 
-        if ($forwarded !== '') {
-            return trim(explode(',', $forwarded)[0]);
+        $isProduction = ($_ENV['APP_ENV'] ?? getenv('APP_ENV')) === 'production';
+
+        if ($isProduction) {
+            $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+            if ($forwarded !== '') {
+                return trim(explode(',', $forwarded)[0]);
+            }
         }
- 
+
         return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     }
 

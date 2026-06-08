@@ -59,7 +59,7 @@ const auth = {
     },
 
     async logout() {
-        return post('/auth/logout');
+        return post('/auth/logout', null);
     },
 
     me() {
@@ -158,15 +158,21 @@ const pipelines = {
     },
 
     replaceSteps(id, steps) {
-        return put(`/pipelines/${id}/steps`, steps);
+        return put(`/pipelines/${id}/steps`, { steps } );
     },
 
     delete(id) {
         return del(`/pipelines/${id}`);
     },
 
-    apply(id, imageB64, signal) {
-        return post(`/pipelines/${id}/apply`, { image_b64: imageB64 }, { signal });
+    // existing post
+    applyToPost(id, postId, signal) {
+        return post(`/pipelines/${id}/apply`, { post_id: postId }, { signal });
+    },
+
+    // raw canvas image
+    preview(id, imageB64, signal) {
+        return post(`/pipelines/${id}/preview`, { image_b64: imageB64 }, { signal });
     },
 };
 

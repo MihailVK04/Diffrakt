@@ -39,8 +39,11 @@ class Router {
      */
 
     private array $routes = [];
+    private Middleware $middleware;
 
-    public function __construct(private readonly Request $request) {}
+    public function __construct(private readonly Request $request, RateLimiter $rateLimiter) {
+        $this->middleware = new Middleware($rateLimiter);
+    }
 
     // -----------------------------------------------------------------------
     // Public API
@@ -52,15 +55,16 @@ class Router {
      * @param string               $method   HTTP verb (GET, POST, PATCH, PUT, DELETE).
      * @param string               $pattern  URI pattern, e.g. '/api/v1/users/{username}'.
      * @param array{0:string,1:string} $handler  [ControllerClass::class, 'methodName'].
-     * @param bool                 $auth     Whether JWT auth is required.
+     * @param ?array $rateLimit  ['endpoint' => string, 'max' => int, 'window' => int] or null
      */
 
-    public function add(string $method, string $pattern, array $handler, bool $auth): void {
+    public function add(string $method, string $pattern, array $handler, bool $auth, ?array $rateLimit = null): void {
         $this->routes[] = [
             'method' => strtoupper($method),
             'regex' => $this->patternToRegex($pattern),
             'handler' => $handler,
             'auth' => $auth,
+            'rateLimit' => $rateLimit,
         ];
     }
 
@@ -102,12 +106,17 @@ class Router {
             $this->sendCors();
 
             if ($route['auth']) {
-                Middleware::requireAuth($this->request);
+                $this->middleware->requireAuth();
+            }
+
+            if ($route['rateLimit'] !== null) {
+                $rl = $route['rateLimit'];
+                $this->middleware->rateLimit($rl['endpoint'], $rl['max'], $rl['window']);
             }
 
             [$class, $action] = $route['handler'];
             $controller = new $class();
-            $controller->action($this->request);
+            $controller->$action($this->request);
 
             Response::json(['error' => 'Controller did not send a response'], 500);
         }
@@ -143,7 +152,7 @@ class Router {
         $escaped = preg_replace_callback(
             '/\{([a-zA-Z_][a-zA-Z0-9_]*)\}|([^{}]+)/',
             static function (array $m): string {
-                if ($m[1] !== '') {
+                if (!empty($m[1])) {
                     return '(?P<' . $m[1] . '>[^/]+)';
                 }
                 return preg_quote($m[2], '#');

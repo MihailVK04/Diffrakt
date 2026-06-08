@@ -20,7 +20,7 @@ use SessionHandlerInterface;
  *
  * The `sessions` table schema:
  *   id          VARCHAR(128)  PRIMARY KEY   — PHP session ID
- *   user_id     INT           NOT NULL      — FK → users.id
+ *   user_id     INT           NULL          — FK → users.id (NULL before login)
  *   data        TEXT          NOT NULL      — serialised $_SESSION payload
  *   expires_at  DATETIME      NOT NULL      — NOW() + SESSION_LIFETIME seconds
  *   created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -33,7 +33,7 @@ class Session implements SessionHandlerInterface {
 
     private function __construct(PDO $pdo, int $lifetime) {
         $this->pdo = $pdo;
-        $this->lifetime - $lifetime;
+        $this->lifetime = $lifetime;
     }
 
     public static function start(): void {
@@ -47,6 +47,7 @@ class Session implements SessionHandlerInterface {
         ini_set('session.cookie_secure', $isSecure ? '1' : '0');
         ini_set('session.gc_maxlifetime', (string) $lifetime);
         ini_set('session.use_only_cookies', '1');
+        ini_set('session.serialize_handler', 'php');
         
         session_name(self::cookieName());
 
@@ -77,19 +78,18 @@ class Session implements SessionHandlerInterface {
     }
 
     public function write(string $id, string $data): bool {
-        $expiresAt = date('Y-m-d H:i:s', time() + $this->lifetime);
         $userId = self::extractUserId($data);
 
         $stmt = $this->pdo->prepare(
             'INSERT INTO sessions (id, user_id, data, expires_at)
-             VALUES (?, ?, ?, ?)
+             VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ? SECOND))
              ON DUPLICATE KEY UPDATE
-               user_id = VALUES(user_id),
-               data = VALUES(data),
-               expires_at = VALUES(expires_at)'
+             user_id = VALUES(user_id),
+             data = VALUES(data),
+             expires_at = VALUES(expires_at)'
         );
 
-        return $stmt->execute([$id, $userId, $data, $expiresAt]);
+        return $stmt->execute([$id, $userId, $data, $this->lifetime]);
     }
 
     public function destroy(string $id): bool {
@@ -140,13 +140,13 @@ class Session implements SessionHandlerInterface {
         return $env === 'production';
     }
 
-    private static function extractUserId(string $data): int
+    private static function extractUserId(string $data): ?int
     {
         if (preg_match('/user_id\|i:(\d+);/', $data, $matches)) {
             return (int) $matches[1];
         }
  
-        return 0;
+        return null;
     }
 }
 ?>
