@@ -42,7 +42,7 @@ class Post {
             SELECT p.*, u.username, u.avatar_path 
             FROM posts p
             JOIN users u ON p.user_id = u.id
-            JOIN follows f ON f.followed_id = p.user_id
+            JOIN follows f ON f.followee_id = p.user_id
             WHERE f.follower_id = ? $cursorQuery
             ORDER BY p.id DESC
             LIMIT ?
@@ -61,7 +61,7 @@ class Post {
         $params[] = $limit;
         
         return $db->fetchAll("
-            SELECT id, user_id, original_path, thumb_path, caption, created_at
+            SELECT id, user_id, original_path, thumb_path, processed_path, caption, created_at
             FROM posts
             WHERE user_id = ? $cursorQuery
             ORDER BY id DESC

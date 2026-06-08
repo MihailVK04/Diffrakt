@@ -67,6 +67,7 @@ export class EditorView {
         this._steps = [];
         this._imageEl = null;
         this._abortCtrl = null;
+        this._listeners = [];
  
         this._previewTimer = null;
         this._previewPending = false;
@@ -89,9 +90,16 @@ export class EditorView {
         this._bindSave();
         this._bindExport();
         this._bindSaveFilter();
-        this._stepList.addEventListener('click', this._onStepAction.bind(this));
-        this._stepList.addEventListener('input', this._onParamInput.bind(this));
- 
+        
+        this._boundStepAction = this._onStepAction.bind(this);
+        this._boundParamInput = this._onParamInput.bind(this);
+
+        this._stepList.addEventListener('click', this._boundStepAction);
+        this._stepList.addEventListener('input', this._boundParamInput);
+
+        this._listeners.push({ el: this._stepList, type: 'click', fn: this._boundStepAction });
+        this._listeners.push({ el: this._stepList, type: 'input', fn: this._boundParamInput });
+
         if (this._postId) {
             await this._loadPost(this._postId);
         } else {
@@ -102,6 +110,11 @@ export class EditorView {
     }
  
     destroy() {
+        for (const { el, type, fn } of this._listeners) {
+            el.removeEventListener(type, fn);
+        }
+        this._listeners = [];
+
         if (this._abortCtrl) {
             this._abortCtrl.abort();
             this._abortCtrl = null;
@@ -145,7 +158,7 @@ export class EditorView {
     }
  
     _bindUpload() {
-        this._uploadInput.addEventListener('change', async () => {
+        const handler =  async () => {
             const file = this._uploadInput.files[0];
             if (!file) return;
  
@@ -173,7 +186,10 @@ export class EditorView {
             } finally {
                 if (uploadBtn) uploadBtn.disabled = false;
             }
-        });
+        };
+
+        this._uploadInput.addEventListener('change', handler);
+        this._listeners.push({ el: this._uploadInput, type: 'change', fn: handler});
     }
  
     _renderFilterPicker() {
@@ -184,7 +200,7 @@ export class EditorView {
     type="button"
 >${this._esc(f.name)}</button>`).join('');
  
-        this._filterList.addEventListener('click', (e) => {
+        const handler = (e) => {
             const btn = e.target.closest('[data-filter-id]');
             if (!btn) return;
             if (!this._imageEl) {
@@ -192,7 +208,10 @@ export class EditorView {
                 return;
             }
             this._addStep(parseInt(btn.dataset.filterId, 10));
-        });
+        };
+
+        this._filterList.addEventListener('click', handler);
+        this._listeners.push({ el: this._filterList, type: 'click', fn: handler});
     }
  
     _addStep(filterId) {
@@ -329,7 +348,7 @@ export class EditorView {
     }
  
     _bindSave() {
-        this._saveBtn.addEventListener('click', async () => {
+        const handler = async () => {
             if (!this._pipeline) {
                 this._setGlobalError('No pipeline to save — upload an image first.');
                 return;
@@ -353,11 +372,14 @@ export class EditorView {
             } finally {
                 this._saveBtn.disabled = false;
             }
-        });
+        };
+
+        this._saveBtn.addEventListener('click', handler);
+        this._listeners.push({ el: this._saveBtn, type: 'click', fn: handler });
     }
  
     _bindExport() {
-        this._exportBtn.addEventListener('click', async () => {
+        const handler = async () => {
             if (!this._postId || !this._pipeline) {
                 this._setGlobalError('Save your pipeline before exporting.');
                 return;
@@ -388,11 +410,14 @@ export class EditorView {
             } finally {
                 this._exportBtn.disabled = false;
             }
-        });
+        };
+
+        this._exportBtn.addEventListener('click', handler);
+        this._listeners.push({ el: this._exportBtn, type: 'click', fn: handler});
     }
  
     _bindSaveFilter() {
-        this._saveFilterBtn.addEventListener('click', async () => {
+        const handler = async () => {
             if (!this._pipeline || this._steps.length === 0) {
                 this._setGlobalError('Add at least one filter step before saving as a filter.');
                 return;
@@ -419,7 +444,10 @@ export class EditorView {
             } finally {
                 this._saveFilterBtn.disabled = false;
             }
-        });
+        };
+
+        this._saveFilterBtn.addEventListener('click', handler);
+        this._listeners.push({ el: this._saveFilterBtn, type: 'click', fn: handler});
     }
  
     _buildShellHTML() {

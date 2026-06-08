@@ -20,7 +20,9 @@ class PipelineController {
         $data = $request->body() ?? [];
         $errors = Validator::validate($data, ['name' => ['required', 'max_length:100']]);
 
-        if (!empty($errors)) Response::unprocessable($errors);
+        if (!empty($errors)) {
+            Response::unprocessable($errors);
+        }
 
         $id = Pipeline::create($request->userId(), $data['name'], $data['description'] ?? '');
         Response::json(['message' => 'Pipeline created.', 'id' => $id], 201);
@@ -30,9 +32,10 @@ class PipelineController {
         $id = (int)($request->params['id'] ?? 0);
         $pipeline = Pipeline::findById($id);
         
-        if (!$pipeline) Response::notFound('Pipeline not found.');
+        if (!$pipeline) {
+            Response::notFound('Pipeline not found.');
+        }
 
-        // ИДЕЯТА НА ДРУГИЯ AI: Слагаме try/catch, за да хванем грешката при depth > 5
         try {
             $pipeline['steps'] = PipelineStep::getFlattenedSteps($id);
             Response::json(['pipeline' => $pipeline]);
@@ -43,6 +46,15 @@ class PipelineController {
 
     public function replaceSteps(Request $request): void {
         $pipelineId = (int)($request->params['id'] ?? 0);
+        
+        $pipeline = Pipeline::findById($pipelineId);
+        if (!$pipeline) {
+            Response::notFound('Pipeline not found.');
+        }
+        if ((int)$pipeline['owner_id'] !== $request->userId()) {
+            Response::forbidden('You do not own this pipeline.');
+        }
+
         $steps = $request->body()['steps'] ?? [];
 
         if (CycleDetector::hasCycle($pipelineId, $steps)) {
@@ -66,14 +78,22 @@ class PipelineController {
         $data = $request->body() ?? [];
         $postId = isset($data['post_id']) ? (int)$data['post_id'] : 0;
 
-        if ($postId === 0) Response::badRequest('Missing post_id in request body.');
+        if ($postId === 0) {
+            Response::badRequest('Missing post_id.');
+        }
 
         $post = Post::findById($postId);
-        if (!$post) Response::notFound('Target post not found.');
-        if ((int)$post['user_id'] !== $request->userId()) Response::forbidden('You do not own this post.');
+        if (!$post) {
+            Response::notFound('Target post not found.');
+        }
+        if ((int)$post['user_id'] !== $request->userId()) {
+            Response::forbidden('You do not own this post.');
+        }
 
         $pipeline = Pipeline::findById($pipelineId);
-        if (!$pipeline) Response::notFound('Pipeline not found.');
+        if (!$pipeline) {
+            Response::notFound('Pipeline not found.');
+        }
 
         try {
             $runner = new PipelineRunner(new StorageService());
@@ -91,46 +111,40 @@ class PipelineController {
     public function preview(Request $request): void {
         $pipelineId = (int)($request->params['id'] ?? 0);
         $data = $request->body() ?? [];
-        $imageB64 = $data['image_b64'] ?? '';
+        $b64 = $data['image_b64'] ?? '';
 
-        if ($imageB64 === '') {
-            Response::badRequest('Missing image_b64 in request body.');
+        if (empty($b64)) {
+            Response::badRequest('Missing image_b64.');
         }
 
         $pipeline = Pipeline::findById($pipelineId);
-        if (!$pipeline) Response::notFound('Pipeline not found.');
+        if (!$pipeline) {
+            Response::notFound('Pipeline not found.');
+        }
 
-        $imageData = base64_decode($imageB64, strict: true);
+        if (str_contains($b64, ',')) {
+            $b64 = explode(',', $b64)[1];
+        }
+
+        $imageData = base64_decode($b64);
         if ($imageData === false) {
-            Response::badRequest('Invalid base64 image data.');
+            Response::badRequest('Invalid base64 encoding.');
         }
 
-        $tmpPath = sys_get_temp_dir() . '/' . bin2hex(random_bytes(8)) . '.jpg';
-        if (file_put_contents($tmpPath, $imageData) === false) {
-            Response::serverError('Failed to write temporary image.');
-        }
+        $tempPath = sys_get_temp_dir() . '/diff_prev_' . uniqid() . '.jpg';
+        file_put_contents($tempPath, $imageData);
 
         try {
             $runner = new PipelineRunner(new StorageService());
-            $processedRelativePath = $runner->run($tmpPath, $pipelineId);
+            $runner->runAbsolute($tempPath, $pipelineId); 
 
-            $processedData = file_get_contents($processedRelativePath);
-            if ($processedData === false) {
-                Response::serverError('Failed to read processed image.');
-            }
+            $processedData = file_get_contents($tempPath);
+            @unlink($tempPath);
 
-            $resultB64 = base64_encode($processedData);
-
-            Response::json([
-                'message' => 'Preview generated successfully.',
-                'image_b64' => $resultB64
-            ]);
+            Response::json(['image_b64' => 'data:image/jpeg;base64,' . base64_encode($processedData)]);
         } catch (\Exception $e) {
-            Response::badRequest('Pipeline processing failed: ' . $e->getMessage());
-        } finally {
-            if (file_exists($tmpPath)) {
-                unlink($tmpPath);
-            }
+            @unlink($tempPath);
+            Response::badRequest('Preview failed: ' . $e->getMessage());
         }
     }
 }
