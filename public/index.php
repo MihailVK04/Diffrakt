@@ -67,7 +67,7 @@ define('STORAGE_PATH', $_ENV['STORAGE_PATH'] ?? getenv('STORAGE_PATH') ?: ROOT_P
 spl_autoload_register(function (string $class): void{
     $prefix = 'Diffrakt\\';
     
-    if (strncmp($class, $prefix, strlen($prefix) !== 0)) {
+    if (strncmp($class, $prefix, strlen($prefix)) !== 0) {
         return;
     }
 
@@ -108,7 +108,7 @@ try {
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
-            'trace' => explode("/n", $e->getTraceAsString()),
+            'trace' => explode("\n", $e->getTraceAsString()),
         ];
     }
 
