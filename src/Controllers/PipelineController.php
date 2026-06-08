@@ -56,6 +56,9 @@ class PipelineController {
         }
 
         $steps = $request->body()['steps'] ?? [];
+        if (!is_array($steps)) {
+            Response::badRequest('steps must be an array.');
+        }
 
         if (CycleDetector::hasCycle($pipelineId, $steps)) {
             Response::unprocessable(['steps' => 'Pipeline would create a cycle or exceed the maximum depth limit.']);
