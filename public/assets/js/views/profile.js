@@ -61,7 +61,8 @@ export class ProfileView {
         
         try {
 
-            this._profile = await api.users.getProfile(this._username);
+            const raw = await api.users.getProfile(this._username);
+            this._profile = raw.user ?? raw;
 
         } catch (err) {
 

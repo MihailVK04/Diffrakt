@@ -25,10 +25,13 @@
  */
 
 import api from './api.js';
+import { Nav } from './components/nav.js';
 import { FeedView } from './views/feed.js';
 import { EditorView } from './views/editor.js';
 import { ProfileView } from './views/profile.js';
 import { HomeView } from './views/home.js';
+
+const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
 
 const ROUTES = [
     { pattern: '/', view: HomeView, auth: false},
@@ -44,8 +47,8 @@ let _userFetched = false;
 
 async function fetchCurrentUser() {
     try {
-        const user = await api.auth.me();
-        return user ?? null;
+        const data = await api.auth.me();
+        return data.user ?? null;
     } catch {
         return null;
     }
@@ -54,6 +57,8 @@ async function fetchCurrentUser() {
 async function refreshUser() {
     _currentUser = await fetchCurrentUser();
     _userFetched = true;
+    const nav = new Nav(document.getElementById('nav'));
+    nav.render(_currentUser);
     return _currentUser;
 }
 
@@ -121,6 +126,7 @@ async function renderRoute(pathname) {
         const view = new route.view(container, params);
         _currentView = view;
         await view.render();
+        _updateActiveLink(pathname);
     } catch (err) {
         console.error('[app] View render error:', err);
         renderError(container, err);
@@ -145,7 +151,7 @@ function renderError(container, err) {
 }
 
 function navigate(path, _state = {}) {
-    window.history.pushState(_state, '', path);
+    window.history.pushState(_state, '', BASE + path);
     renderRoute(path);
 }
 
@@ -161,7 +167,7 @@ function handleLinkClick(e) {
 }
 
 function handlePopState() {
-    renderRoute(window.location.pathname);
+    renderRoute(window.location.pathname.replace(BASE, '') || '/');
 }
 
 window.app = {
@@ -170,8 +176,24 @@ window.app = {
     getCurrentUser: () => _currentUser,
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    const nav = new Nav(document.getElementById('nav'));
+
     document.addEventListener('click', handleLinkClick);
     window.addEventListener('popstate', handlePopState);
-    renderRoute(window.location.pathname);
+
+    _currentUser = await fetchCurrentUser();
+    _userFetched = true;
+    nav.render(_currentUser);
+
+    renderRoute(window.location.pathname.replace(BASE, '') || '/');
 });
+
+function _updateActiveLink(path) {
+    const links = document.querySelectorAll('#nav .nav__link');
+    for (const link of links) {
+        const href = link.getAttribute('href');
+        const isActive = href === path || (href !== '/' && path.startsWith(href));
+        link.setAttribute('aria-current', isActive ? 'page' : 'false');
+    }
+}

@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^$ public/shell.php [L]
+    RewriteRule ^(assets/.*)$ public/$1 [L]
+    RewriteRule ^api/(.*)$ public/index.php [QSA,L]
+    RewriteRule ^(.*)$ public/shell.php [L]
+
+</IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+Options -Indexes

@@ -21,7 +21,7 @@
  *   }
  */
 
-import { FILTER_MAP } from "./canvas";
+import { FILTER_MAP } from "./canvas.js";
 
 export function runPipeline(source, steps) {
     const canvas = _sourceToCanvas(source);
