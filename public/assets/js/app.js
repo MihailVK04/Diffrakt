@@ -177,7 +177,7 @@ window.app = {
     getCurrentUser: () => _currentUser,
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('click', handleLinkClick);
     window.addEventListener('popstate', handlePopState);
 
