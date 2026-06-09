@@ -11,6 +11,7 @@ $base = rtrim(dirname($_SERVER['SCRIPT_NAME'], 2), '/\\') . '/';
     <link rel="stylesheet" href="./assets/css/app.css">
 </head>
 <body>
+    <nav id="nav" hidden></nav>
     <div id="app"></div>
     <script type="module" src="./assets/js/app.js"></script>
 </body>

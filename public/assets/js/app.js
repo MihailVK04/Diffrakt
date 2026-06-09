@@ -25,6 +25,7 @@
  */
 
 import api from './api.js';
+import { Nav } from './components/nav.js';
 import { FeedView } from './views/feed.js';
 import { EditorView } from './views/editor.js';
 import { ProfileView } from './views/profile.js';
@@ -44,6 +45,8 @@ let _currentView = null;
 let _currentUser = null;
 let _userFetched = false;
 
+const nav = new Nav(document.getElementById('nav'));
+
 async function fetchCurrentUser() {
     try {
         const user = await api.auth.me();
@@ -56,6 +59,7 @@ async function fetchCurrentUser() {
 async function refreshUser() {
     _currentUser = await fetchCurrentUser();
     _userFetched = true;
+    nav.render(_currentUser);
     return _currentUser;
 }
 
@@ -123,6 +127,7 @@ async function renderRoute(pathname) {
         const view = new route.view(container, params);
         _currentView = view;
         await view.render();
+        _updateActiveLink(pathname);
     } catch (err) {
         console.error('[app] View render error:', err);
         renderError(container, err);
@@ -175,5 +180,19 @@ window.app = {
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', handleLinkClick);
     window.addEventListener('popstate', handlePopState);
+
+    _currentUser = await fetchCurrentUser();
+    _userFetched = true;
+    nav.render(_currentUser);
+
     renderRoute(window.location.pathname.replace(BASE, '') || '/');
 });
+
+function _updateActiveLink(path) {
+    const links = document.querySelectorAll('#nav .nav__link');
+    for (const link of links) {
+        const href = link.getAttribute('href');
+        const isActive = href === path || (href !== '/' && path.startsWith(href));
+        link.setAttribute('aria-current', isActive ? 'page' : 'false');
+    }
+}
