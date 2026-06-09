@@ -1,5 +1,5 @@
 <?php
-$base = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/';
+$base = rtrim(dirname($_SERVER['SCRIPT_NAME'], 2), '/\\') . '/';
 ?>
 <!DOCTYPE html>
 <html lang="en">
