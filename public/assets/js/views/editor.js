@@ -130,7 +130,8 @@ export class EditorView {
         this._abortCtrl = new AbortController();
  
         try {
-            this._post = await api.posts.get(postId);
+            const raw = await api.posts.get(postId);
+            this._post = raw.post ?? raw;
  
             const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
             this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
