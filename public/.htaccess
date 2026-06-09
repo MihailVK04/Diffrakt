@@ -8,7 +8,7 @@
 
     RewriteRule ^api/ index.php [QSA,L]
 
-    RewriteRule ^ index.html [L]
+    RewriteRule ^ shell.php [L]
 
 </IfModule>
 

@@ -55,7 +55,8 @@ final class Database
         $port    = $_ENV['DB_PORT']    ?? $_SERVER['DB_PORT']    ?? '3306';
         $name    = $this->requireEnv('DB_NAME');
         $user    = $this->requireEnv('DB_USER');
-        $pass    = $this->requireEnv('DB_PASS');
+        //$pass    = $this->requireEnv('DB_PASS');
+        $pass    = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? '';
         $charset = $_ENV['DB_CHARSET'] ?? $_SERVER['DB_CHARSET'] ?? 'utf8mb4';
 
         $dsn = sprintf(

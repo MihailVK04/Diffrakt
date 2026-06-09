@@ -15,9 +15,9 @@ class AuthController {
     public function register(Request $request): void {
         $data = $request->body() ?? [];
 
-        if (($data['password'] ?? '') !== ($data['password_again'] ?? '')) {
-            Response::unprocessable(['password_again' => 'Паролите трябва да съвпадат точно']); 
-        }
+        // if (($data['password'] ?? '') !== ($data['password_again'] ?? '')) {
+        //     Response::unprocessable(['password_again' => 'Паролите трябва да съвпадат точно']); 
+        // }
 
         $errors = Validator::validate($data, [
             'username' => ['required', 'min_length:3', 'max_length:40'],
