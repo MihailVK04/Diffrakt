@@ -497,6 +497,9 @@ export class EditorView {
     }
 
     _loadImage(url) {
+        const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+        const fullUrl = url.startsWith('http') ? url : `${BASE}/${url.replace(/^\//, '')}`;
+
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
