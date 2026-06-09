@@ -26,29 +26,29 @@ class PipelineRunner {
     }
 
     public function run(string $originalPath, int $pipelineId): string {
-        [$sourceCategory, $sourceFilename] = explode('/', $originalPath, 2);
+        [$sourceCategory, $sourceFilename] = \explode('/', $originalPath, 2);
         $absoluteSource = $this->storage->getPath($sourceCategory, $sourceFilename);
         
-        if (!file_exists($absoluteSource)) {
+        if (!\file_exists($absoluteSource)) {
             throw new \RuntimeException('Source file not found.');
         }
 
-        $processedFilename = bin2hex(random_bytes(16)) . '.jpg';
+        $processedFilename = \bin2hex(\random_bytes(16)) . '.jpg';
         $relativePath = 'processed/' . $processedFilename;
         $absoluteDest = $this->storage->getPath('processed', $processedFilename);
 
-        if (!is_dir(dirname($absoluteDest))) {
-            mkdir(dirname($absoluteDest), 0755, true);
+        if (!\is_dir(\dirname($absoluteDest))) {
+            \mkdir(\dirname($absoluteDest), 0755, true);
         }
 
-        copy($absoluteSource, $absoluteDest);
+        \copy($absoluteSource, $absoluteDest);
         $this->runAbsolute($absoluteDest, $pipelineId);
 
         return $relativePath;
     }
 
     public function runAbsolute(string $absolutePath, int $pipelineId): void {
-        if (!file_exists($absolutePath)) {
+        if (!\file_exists($absolutePath)) {
             throw new \RuntimeException('Source file not found.');
         }
 
@@ -57,7 +57,7 @@ class PipelineRunner {
             return;
         }
 
-        $image = imagecreatefromjpeg($absolutePath);
+        $image = \imagecreatefromstring(\file_get_contents($absolutePath));
         if (!$image) {
             throw new \RuntimeException('Failed to load image for processing.');
         }
@@ -70,12 +70,12 @@ class PipelineRunner {
             }
 
             $filterClass = $this->filterMap[$filterId];
-            if (class_exists($filterClass)) {
+            if (\class_exists($filterClass)) {
                 $filterInstance = new $filterClass();
                 $image = $filterInstance->apply($image, $step['params'] ?? []);
             }
         }
 
-        imagejpeg($image, $absolutePath, 90);
+        \imagejpeg($image, $absolutePath, 90);
     }
 }

@@ -36,7 +36,7 @@ class PostController {
             Response::json([
                 'message' => 'Post uploaded successfully',
                 'id' => $postId,
-                'thumb_url' => '/api/v1/files?path=' . urlencode($paths['thumb'])
+                'thumb_url' => 'api/v1/files?path=' . urlencode($paths['thumb'])
             ], 201);
 
         } catch (\Exception $e) {
@@ -50,6 +50,12 @@ class PostController {
         if (!$post) {
             Response::notFound('Post not found.');
         }
+
+        $post['thumb_url'] = 'api/v1/files?path=' . urlencode($post['thumb_path']);
+        if ($post['processed_path']) {
+            $post['processed_url'] = 'api/v1/files?path=' . urlencode($post['processed_path']);
+        }
+        
         Response::json(['post' => $post]);
     }
 
@@ -128,7 +134,7 @@ class PostController {
             
             Response::json([
                 'message' => 'Export complete.',
-                'download_url' => '/api/v1/files?path=' . urlencode($processedPath)
+                'download_url' => 'api/v1/files?path=' . urlencode($processedPath)
             ]);
         } catch (\Exception $e) {
             Response::badRequest('Export failed: ' . $e->getMessage());

@@ -30,6 +30,7 @@ use Diffrakt\Controllers\FilterController;
 use Diffrakt\Controllers\PipelineController;
 use Diffrakt\Controllers\PostController;
 use Diffrakt\Controllers\UserController;
+use Diffrakt\Controllers\FileController;
 
 // ---------------------------------------------------------------------------
 // 1. Load .env
@@ -114,6 +115,7 @@ $router->add('POST', '/api/v1/auth/login', [AuthController::class, 'login'], fal
 $router->add('POST', '/api/v1/auth/logout', [AuthController::class, 'logout'], true, null);
 $router->add('GET', '/api/v1/auth/me', [AuthController::class, 'me'], true, null);
 
+$router->add('GET', '/api/v1/users/search', [UserController::class, 'search'], false);
 $router->add('GET', '/api/v1/users/{username}', [UserController::class, 'profile'], false, null);
 // НОВ РЕД ЗА SPEC 005: Endpoint за снимките на потребителя с пагинация
 $router->add('PATCH', '/api/v1/users/me', [UserController::class, 'update'], true, null);
@@ -141,6 +143,7 @@ $router->add('POST', '/api/v1/pipelines/{id}/preview', [PipelineController::clas
 
 $router->add('GET', '/api/v1/feed', [FeedController::class, 'index'], true, null);
 
+$router->add('GET', '/api/v1/files', [FileController::class, 'serve'], false, null);
 // ---------------------------------------------------------------------------
 // 6. Dispatch
 //

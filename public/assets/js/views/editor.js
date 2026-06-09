@@ -130,9 +130,11 @@ export class EditorView {
         this._abortCtrl = new AbortController();
  
         try {
-            this._post = await api.posts.get(postId);
+            const raw = await api.posts.get(postId);
+            this._post = raw.post ?? raw;
  
-            this._imageEl = await this._loadImage(this._post.thumb_url);
+            const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+            this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
  
             if (this._post.pipeline_id) {
                 this._pipeline = await api.pipelines.get(this._post.pipeline_id);
@@ -169,11 +171,12 @@ export class EditorView {
             try {
                 this._post = await api.posts.upload(file, '', 'public');
                 this._postId = this._post.id;
-                this._imageEl = await this._loadImage(this._post.thumb_url);
+                const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+                this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
                 this._pipeline = await api.pipelines.create(`Post ${this._postId} pipeline`);
                 this._steps = [];
  
-                history.replaceState(null, '', `/editor/${this._postId}`);
+                history.replaceState(null, '', `${BASE}/editor/${this._postId}`);
  
                 this._uploadSection.hidden = true;
                 this._previewCanvas.hidden = false;
@@ -494,12 +497,15 @@ export class EditorView {
     }
 
     _loadImage(url) {
+        const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+        const fullUrl = url.startsWith('http') ? url : `${BASE}/${url.replace(/^\//, '')}`;
+
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-            img.src = url;
+            img.onerror = () => reject(new Error(`Failed to load image: ${fullUrl}`));
+            img.src = fullUrl;
         });
     }
  

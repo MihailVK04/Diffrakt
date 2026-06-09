@@ -39,6 +39,7 @@ export class Nav {
         this._container.innerHTML = this._buildHTML(user);
  
         this._bindLogout();
+        this._bindSearch();
     }
  
     destroy() {
@@ -54,6 +55,18 @@ export class Nav {
         return `
 <div class="nav__inner">
     <a class="nav__brand" href="/feed" data-link>Diffrakt</a>
+
+    <div class="nav__search">
+        <input
+            class="nav__search-input"
+            type="search"
+            placeholder="Search users…"
+            autocomplete="off"
+            aria-label="Search users"
+            id="nav-search-input"
+        />
+        <ul class="nav__search-dropdown" id="nav-search-dropdown" role="listbox" hidden></ul>
+    </div>
  
     <ul class="nav__links" role="list">
         <li>
@@ -94,6 +107,107 @@ export class Nav {
  
         btn.addEventListener('click', handler);
         this._listeners.push({ el: btn, type: 'click', fn: handler });
+    }
+
+    _bindSearch() {
+        const input    = this._container.querySelector('#nav-search-input');
+        const dropdown = this._container.querySelector('#nav-search-dropdown');
+        if (!input || !dropdown) return;
+
+        let debounceTimer = null;
+        let activeIndex   = -1;
+
+        const showResults = (users) => {
+            if (!users.length) {
+                dropdown.hidden = true;
+                dropdown.innerHTML = '';
+                return;
+            }
+
+            dropdown.innerHTML = users.map((u, i) => `
+                <li class="nav__search-item" role="option" data-username="${this._esc(u.username)}" data-index="${i}">
+                    <span class="nav__search-username">${this._esc(u.username)}</span>
+                    ${u.bio ? `<span class="nav__search-bio">${this._esc(u.bio.slice(0, 40))}</span>` : ''}
+                </li>
+            `).join('');
+
+            activeIndex = -1;
+            dropdown.hidden = false;
+        };
+
+        const closeDropdown = () => {
+            dropdown.hidden = true;
+            dropdown.innerHTML = '';
+            activeIndex = -1;
+        };
+
+        const navigateToUser = (username) => {
+            closeDropdown();
+            input.value = '';
+            window.app.navigate(`/profile/${encodeURIComponent(username)}`);
+        };
+
+        // Debounced input handler
+        const onInput = () => {
+            clearTimeout(debounceTimer);
+            const q = input.value.trim();
+            if (q.length < 2) { closeDropdown(); return; }
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const data = await api.users.search(q);
+                    showResults(data.users ?? []);
+                } catch {
+                    closeDropdown();
+                }
+            }, 300);
+        };
+
+        // Keyboard navigation
+        const onKeydown = (e) => {
+            const items = [...dropdown.querySelectorAll('.nav__search-item')];
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = (activeIndex + 1) % items.length;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+                e.preventDefault();
+                navigateToUser(items[activeIndex].dataset.username);
+                return;
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+                return;
+            }
+
+            items.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
+        };
+
+        // Click on a result
+        const onDropdownClick = (e) => {
+            const item = e.target.closest('.nav__search-item');
+            if (item) navigateToUser(item.dataset.username);
+        };
+
+        // Close on outside click
+        const onDocumentClick = (e) => {
+            if (!this._container.contains(e.target)) closeDropdown();
+        };
+
+        input.addEventListener('input', onInput);
+        input.addEventListener('keydown', onKeydown);
+        dropdown.addEventListener('click', onDropdownClick);
+        document.addEventListener('click', onDocumentClick);
+
+        this._listeners.push(
+            { el: input,    type: 'input',   fn: onInput },
+            { el: input,    type: 'keydown', fn: onKeydown },
+            { el: dropdown, type: 'click',   fn: onDropdownClick },
+            { el: document, type: 'click',   fn: onDocumentClick },
+        );
     }
  
     _esc(value) {
