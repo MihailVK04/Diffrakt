@@ -176,7 +176,7 @@ export class EditorView {
                 this._pipeline = await api.pipelines.create(`Post ${this._postId} pipeline`);
                 this._steps = [];
  
-                history.replaceState(null, '', `/editor/${this._postId}`);
+                history.replaceState(null, '', `${BASE}/editor/${this._postId}`);
  
                 this._uploadSection.hidden = true;
                 this._previewCanvas.hidden = false;
