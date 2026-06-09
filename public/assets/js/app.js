@@ -45,8 +45,6 @@ let _currentView = null;
 let _currentUser = null;
 let _userFetched = false;
 
-const nav = new Nav(document.getElementById('nav'));
-
 async function fetchCurrentUser() {
     try {
         const user = await api.auth.me();
@@ -59,6 +57,7 @@ async function fetchCurrentUser() {
 async function refreshUser() {
     _currentUser = await fetchCurrentUser();
     _userFetched = true;
+    const nav = new Nav(document.getElementById('nav'));
     nav.render(_currentUser);
     return _currentUser;
 }
@@ -178,6 +177,8 @@ window.app = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const nav = new Nav(document.getElementById('nav'));
+
     document.addEventListener('click', handleLinkClick);
     window.addEventListener('popstate', handlePopState);
 
