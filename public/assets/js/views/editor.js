@@ -504,8 +504,8 @@ export class EditorView {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-            img.src = url;
+            img.onerror = () => reject(new Error(`Failed to load image: ${fullUrl}`));
+            img.src = fullUrl;
         });
     }
  
