@@ -49,13 +49,7 @@ class ImageService {
 
         $mime = mime_content_type($sourceFile);
         
-        $image = match ($mime) {
-            'image/jpeg' => imagecreatefromjpeg($sourceFile),
-            'image/png'  => imagecreatefrompng($sourceFile),
-            'image/webp' => imagecreatefromwebp($sourceFile),
-            'image/gif'  => imagecreatefromgif($sourceFile),
-            default      => imagecreatefromstring(file_get_contents($sourceFile))
-        };
+        $image = imagecreatefromstring(file_get_contents($sourceFile));
 
         if (!$image) {
             throw new \RuntimeException('Failed to read image data.');
