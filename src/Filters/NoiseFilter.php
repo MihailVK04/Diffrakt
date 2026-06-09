@@ -4,25 +4,32 @@ declare(strict_types=1);
 
 namespace Diffrakt\Filters;
 
-use GdImage;
-
 class NoiseFilter implements FilterInterface {
-    public function apply(GdImage &$image, array $params): void {
+    public function apply(\GdImage $image, array $params): \GdImage {
+        $intensity = max(1, min(100, (int)($params['intensity'] ?? 10)));
+        $amount = $intensity / 100.0;
+        
         $width = imagesx($image);
         $height = imagesy($image);
-        
-        $intensity = isset($params['intensity']) ? max(1, min(100, (int)$params['intensity'])) : 10;
-        $noisePixels = (int) (($width * $height) * ($intensity / 100));
 
-        // ОПТИМИЗАЦИЯ: Алокираме цветовете ВЕДНЪЖ, извън цикъла
-        $black = imagecolorallocate($image, 0, 0, 0);
-        $white = imagecolorallocate($image, 255, 255, 255);
+        for ($x = 0; $x < $width; $x++) {
+            for ($y = 0; $y < $height; $y++) {
+                if (mt_rand() / mt_getrandmax() < $amount) {
+                    $rgb = imagecolorat($image, $x, $y);
+                    $r = ($rgb >> 16) & 0xFF;
+                    $g = ($rgb >> 8) & 0xFF;
+                    $b = $rgb & 0xFF;
 
-        for ($i = 0; $i < $noisePixels; $i++) {
-            $x = rand(0, $width - 1);
-            $y = rand(0, $height - 1);
-            $color = rand(0, 1) === 1 ? $white : $black;
-            imagesetpixel($image, $x, $y, $color);
+                    $noise = mt_rand(-30, 30);
+                    $newR = max(0, min(255, $r + $noise));
+                    $newG = max(0, min(255, $g + $noise));
+                    $newB = max(0, min(255, $b + $noise));
+
+                    $color = ($newR << 16) | ($newG << 8) | $newB;
+                    imagesetpixel($image, $x, $y, $color);
+                }
+            }
         }
+        return $image;
     }
 }

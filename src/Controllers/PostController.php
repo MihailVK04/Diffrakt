@@ -1,71 +1,137 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Diffrakt\Controllers;
 
 use Diffrakt\Core\Request;
 use Diffrakt\Core\Response;
-use Diffrakt\Services\ImageService;
-use Diffrakt\Services\StorageService;
+use Diffrakt\Core\Database;
 use Diffrakt\Models\Post;
+use Diffrakt\Services\ImageService;
+use Diffrakt\Services\PipelineRunner;
+use Diffrakt\Services\StorageService;
 
 class PostController {
-    private StorageService $storage;
-    private ImageService $imageService;
-
-    public function __construct() {
-        $this->storage = new StorageService();
-        $this->imageService = new ImageService($this->storage);
-    }
-
     public function upload(Request $request): void {
-        $file = $request->file('image');
-        if (!$file) Response::badRequest('No image provided.');
+        $uploadedFile = $request->file('image');
+        if (!$uploadedFile || $uploadedFile['error'] !== UPLOAD_ERR_OK) {
+            Response::badRequest('Image upload failed or missing.');
+        }
 
-        $caption = (string) $request->input('caption', '');
+        $caption = $request->input('caption') ?? '';
 
         try {
-            $paths = $this->imageService->processUpload($file);
+            $storage = new StorageService();
+            $imageService = new ImageService($storage);
+            
+            $paths = $imageService->processUpload($uploadedFile);
+
             $postId = Post::create([
                 'user_id' => $request->userId(),
                 'original_path' => $paths['original'],
                 'thumb_path' => $paths['thumb'],
                 'caption' => $caption
             ]);
-            
-            // ФИКС: Изрично задаваме ключовете, за да не счупим фронтенда на Мишо
+
             Response::json([
-                'post' => [
-                    'id'            => $postId,
-                    'original_path' => $paths['original'],
-                    'thumb_path'    => $paths['thumb'],
-                    'caption'       => $caption
-                ]
+                'message' => 'Post uploaded successfully',
+                'id' => $postId,
+                'thumb_url' => '/api/v1/files?path=' . urlencode($paths['thumb'])
             ], 201);
+
         } catch (\Exception $e) {
-            Response::badRequest($e->getMessage());
+            Response::badRequest('Upload processing failed: ' . $e->getMessage());
         }
     }
 
     public function get(Request $request): void {
-        $post = Post::findById((int)($request->params['id'] ?? 0));
-        if (!$post) Response::notFound('Post not found.');
+        $id = (int)($request->params['id'] ?? 0);
+        $post = Post::findById($id);
+        if (!$post) {
+            Response::notFound('Post not found.');
+        }
         Response::json(['post' => $post]);
     }
 
     public function update(Request $request): void {
-        Response::json(['message' => 'Update post endpoint is pending.']);
+        $postId = (int)($request->params['id'] ?? 0);
+        $caption = $request->input('caption');
+
+        $post = Post::findById($postId);
+        if (!$post) {
+            Response::notFound('Post not found.');
+        }
+        if ((int)$post['user_id'] !== $request->userId()) {
+            Response::forbidden('Access denied.');
+        }
+
+        if ($caption !== null) {
+            Database::getInstance()->execute(
+                'UPDATE posts SET caption = ? WHERE id = ?', 
+                [$caption, $postId]
+            );
+        }
+
+        Response::json(['message' => 'Post updated.']);
     }
 
     public function delete(Request $request): void {
-        if (Post::delete((int)($request->params['id'] ?? 0), $request->userId()) === 0) {
-            Response::notFound('Post not found or access denied.');
+        $postId = (int)($request->params['id'] ?? 0);
+        $post = Post::findById($postId);
+        if (!$post) {
+            Response::notFound('Post not found.');
         }
-        Response::json(['message' => 'Deleted.']);
+        if ((int)$post['user_id'] !== $request->userId()) {
+            Response::forbidden('Access denied.');
+        }
+
+        $storage = new StorageService();
+        
+        $storage->deleteFile($post['original_path']);
+        $storage->deleteFile($post['thumb_path']);
+        
+        if ($post['processed_path']) {
+            $storage->deleteFile($post['processed_path']);
+        }
+
+        Post::delete($postId, $request->userId());
+        Response::json(['message' => 'Post deleted.']);
     }
 
     public function export(Request $request): void {
-        Response::json(['message' => 'Export post endpoint is pending.']);
+        $postId = (int)($request->params['id'] ?? 0);
+        
+        $data = $request->body() ?? [];
+        $pipelineId = isset($data['pipeline_id']) ? (int)$data['pipeline_id'] : 0;
+
+        if ($pipelineId === 0) {
+            Response::badRequest('pipeline_id is required.');
+        }
+
+        $post = Post::findById($postId);
+        if (!$post) {
+            Response::notFound('Post not found.');
+        }
+        if ((int)$post['user_id'] !== $request->userId()) {
+            Response::forbidden('Access denied.');
+        }
+
+        try {
+            $storage = new StorageService();
+            $runner = new PipelineRunner($storage);
+            $processedPath = $runner->run($post['original_path'], $pipelineId);
+            
+            Database::getInstance()->execute(
+                'UPDATE posts SET processed_path = ? WHERE id = ?', 
+                [$processedPath, $postId]
+            );
+            
+            Response::json([
+                'message' => 'Export complete.',
+                'download_url' => '/api/v1/files?path=' . urlencode($processedPath)
+            ]);
+        } catch (\Exception $e) {
+            Response::badRequest('Export failed: ' . $e->getMessage());
+        }
     }
 }

@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Diffrakt\Models;
@@ -7,7 +6,6 @@ namespace Diffrakt\Models;
 use Diffrakt\Core\Database;
 
 class Post {
-
     public static function create(array $data): int {
         $db = Database::getInstance();
         return $db->insert(
