@@ -36,7 +36,7 @@ class PostController {
             Response::json([
                 'message' => 'Post uploaded successfully',
                 'id' => $postId,
-                'thumb_url' => '/api/v1/files?path=' . urlencode($paths['thumb'])
+                'thumb_url' => 'api/v1/files?path=' . urlencode($paths['thumb'])
             ], 201);
 
         } catch (\Exception $e) {
@@ -128,7 +128,7 @@ class PostController {
             
             Response::json([
                 'message' => 'Export complete.',
-                'download_url' => '/api/v1/files?path=' . urlencode($processedPath)
+                'download_url' => 'api/v1/files?path=' . urlencode($processedPath)
             ]);
         } catch (\Exception $e) {
             Response::badRequest('Export failed: ' . $e->getMessage());
