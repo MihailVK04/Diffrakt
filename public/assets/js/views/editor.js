@@ -132,7 +132,8 @@ export class EditorView {
         try {
             this._post = await api.posts.get(postId);
  
-            this._imageEl = await this._loadImage(this._post.thumb_url);
+            const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+            this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
  
             if (this._post.pipeline_id) {
                 this._pipeline = await api.pipelines.get(this._post.pipeline_id);
@@ -169,7 +170,8 @@ export class EditorView {
             try {
                 this._post = await api.posts.upload(file, '', 'public');
                 this._postId = this._post.id;
-                this._imageEl = await this._loadImage(this._post.thumb_url);
+                const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+                this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
                 this._pipeline = await api.pipelines.create(`Post ${this._postId} pipeline`);
                 this._steps = [];
  
