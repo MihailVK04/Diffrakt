@@ -30,6 +30,7 @@ use Diffrakt\Controllers\FilterController;
 use Diffrakt\Controllers\PipelineController;
 use Diffrakt\Controllers\PostController;
 use Diffrakt\Controllers\UserController;
+use Diffrakt\Controllers\FileController;
 
 // ---------------------------------------------------------------------------
 // 1. Load .env
@@ -142,6 +143,7 @@ $router->add('POST', '/api/v1/pipelines/{id}/preview', [PipelineController::clas
 
 $router->add('GET', '/api/v1/feed', [FeedController::class, 'index'], true, null);
 
+$router->add('GET', '/api/v1/files', [FileController::class, 'serve'], false, null);
 // ---------------------------------------------------------------------------
 // 6. Dispatch
 //
