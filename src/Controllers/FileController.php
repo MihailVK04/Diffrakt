@@ -38,6 +38,7 @@ class FileController {
         header('Content-Type: ' . $mime);
         header('Content-Length: ' . filesize($absolutePath));
         header('Cache-Control: public, max-age=31536000');
+        header('Access-Control-Allow-Origin: *');
         readfile($absolutePath);
         exit;
     }
