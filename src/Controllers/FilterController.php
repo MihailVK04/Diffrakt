@@ -6,7 +6,6 @@ namespace Diffrakt\Controllers;
 
 use Diffrakt\Core\Request;
 use Diffrakt\Core\Response;
-use Diffrakt\Core\Validator;
 use Diffrakt\Models\Filter;
 
 class FilterController {
@@ -17,33 +16,38 @@ class FilterController {
     }
 
     public function get(Request $request): void {
-        $id = $request->params['id'] ?? 0;
-        $filter = Filter::findById((int)$id);
-
-        if (!$filter) Response::notFound('Filter not found.');
+        $id = (int)($request->params['id'] ?? 0);
+        $filter = Filter::findById($id);
+        if (!$filter) {
+            Response::notFound('Filter not found.');
+        }
         Response::json(['filter' => $filter]);
     }
 
     public function create(Request $request): void {
         $data = $request->body() ?? [];
-        $errors = Validator::validate($data, ['name' => ['required', 'max_length:50']]);
+        
+        if (empty($data['name'])) {
+            Response::badRequest('Filter name is required.');
+        }
+        if (empty($data['pipeline_id'])) {
+            Response::badRequest('pipeline_id is required to create a composite filter.');
+        }
 
-        if (!empty($errors)) Response::unprocessable($errors);
+        $filterId = Filter::createComposite(
+            $request->userId(), 
+            $data['name'], 
+            (int)$data['pipeline_id']
+        );
 
-        $id = Filter::createComposite([
-            'name' => $data['name'],
-            'owner_id' => $request->userId()
-        ]);
-
-        Response::json(['message' => 'Filter created.', 'id' => $id], 201);
+        Response::json(['message' => 'Filter created', 'id' => $filterId], 201);
     }
 
     public function delete(Request $request): void {
-        $id = $request->params['id'] ?? 0;
-        if (Filter::delete((int)$id, $request->userId()) === 0) {
-            Response::notFound('Filter not found, already deleted, or you lack permission.');
+        $id = (int)($request->params['id'] ?? 0);
+        if (Filter::delete($id, $request->userId()) === 0) {
+            Response::notFound('Filter not found, not a composite, or permission denied.');
         }
-
-        Response::json(['message' => 'Filter deleted successfully.']);
+        Response::json(['message' => 'Filter deleted.']);
     }
 }

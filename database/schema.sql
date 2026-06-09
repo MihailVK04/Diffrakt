@@ -29,17 +29,6 @@ CREATE TABLE posts (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE filters (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    owner_id INT NULL, 
-    name VARCHAR(100) NOT NULL,
-    type VARCHAR(50) NOT NULL, 
-    is_public BOOLEAN NOT NULL DEFAULT 0,
-    params_schema JSON NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 CREATE TABLE pipelines (
     id INT AUTO_INCREMENT PRIMARY KEY,
     owner_id INT NOT NULL,
@@ -47,6 +36,19 @@ CREATE TABLE pipelines (
     description TEXT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE filters (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id INT NULL, 
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(50) NOT NULL, 
+    is_public BOOLEAN NOT NULL DEFAULT 0,
+    pipeline_id INT NULL,
+    params_schema JSON NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (pipeline_id) REFERENCES pipelines(id) ON DELETE SET NULL
 );
 
 CREATE TABLE pipeline_steps (

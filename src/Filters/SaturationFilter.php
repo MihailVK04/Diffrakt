@@ -1,41 +1,32 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Diffrakt\Filters;
 
-use GdImage;
-
 class SaturationFilter implements FilterInterface {
-    public function apply(GdImage &$image, array $params): void {
-        $value = isset($params['value']) ? (float)$params['value'] : 1.0;
-        if ($value === 1.0) return;
-
+    public function apply(\GdImage $image, array $params): \GdImage {
+        $level = (float)($params['level'] ?? 1.0); 
         $width = imagesx($image);
         $height = imagesy($image);
 
-        for ($y = 0; $y < $height; $y++) {
-            for ($x = 0; $x < $width; $x++) {
+        for ($x = 0; $x < $width; $x++) {
+            for ($y = 0; $y < $height; $y++) {
                 $rgb = imagecolorat($image, $x, $y);
                 $r = ($rgb >> 16) & 0xFF;
                 $g = ($rgb >> 8) & 0xFF;
                 $b = $rgb & 0xFF;
 
-                // Изчисляваме яркостта (Luminance) по W3C стандарт
-                $lum = 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+                $lum = 0.299 * $r + 0.587 * $g + 0.114 * $b;
 
-                // Отдалечаваме или приближаваме цветовете до сивото ($lum)
-                $newR = (int)($lum + ($r - $lum) * $value);
-                $newG = (int)($lum + ($g - $lum) * $value);
-                $newB = (int)($lum + ($b - $lum) * $value);
+                $newR = max(0, min(255, (int)($lum + ($r - $lum) * $level)));
+                $newG = max(0, min(255, (int)($lum + ($g - $lum) * $level)));
+                $newB = max(0, min(255, (int)($lum + ($b - $lum) * $level)));
 
-                $newR = min(255, max(0, $newR));
-                $newG = min(255, max(0, $newG));
-                $newB = min(255, max(0, $newB));
-
-                $color = imagecolorallocate($image, $newR, $newG, $newB);
+                $color = ($newR << 16) | ($newG << 8) | $newB;
                 imagesetpixel($image, $x, $y, $color);
             }
         }
+        
+        return $image; 
     }
 }

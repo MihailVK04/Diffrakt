@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Diffrakt\Controllers;
@@ -15,11 +14,9 @@ use Diffrakt\Services\StorageService;
 use Diffrakt\Services\PipelineRunner;
 
 class PipelineController {
-
     public function create(Request $request): void {
         $data = $request->body() ?? [];
         $errors = Validator::validate($data, ['name' => ['required', 'max_length:100']]);
-
         if (!empty($errors)) {
             Response::unprocessable($errors);
         }
@@ -31,7 +28,6 @@ class PipelineController {
     public function get(Request $request): void {
         $id = (int)($request->params['id'] ?? 0);
         $pipeline = Pipeline::findById($id);
-        
         if (!$pipeline) {
             Response::notFound('Pipeline not found.');
         }
@@ -46,8 +42,8 @@ class PipelineController {
 
     public function replaceSteps(Request $request): void {
         $pipelineId = (int)($request->params['id'] ?? 0);
-        
         $pipeline = Pipeline::findById($pipelineId);
+        
         if (!$pipeline) {
             Response::notFound('Pipeline not found.');
         }
@@ -56,12 +52,9 @@ class PipelineController {
         }
 
         $steps = $request->body()['steps'] ?? [];
-        if (!is_array($steps)) {
-            Response::badRequest('steps must be an array.');
-        }
 
         if (CycleDetector::hasCycle($pipelineId, $steps)) {
-            Response::unprocessable(['steps' => 'Pipeline would create a cycle or exceed the maximum depth limit.']);
+            Response::unprocessable(['steps' => 'Pipeline would create a cycle or exceed maximum depth.']);
         }
 
         PipelineStep::replaceSteps($pipelineId, $steps);
@@ -101,7 +94,6 @@ class PipelineController {
         try {
             $runner = new PipelineRunner(new StorageService());
             $processedRelativePath = $runner->run($post['original_path'], $pipelineId);
-
             Response::json([
                 'message' => 'Pipeline applied successfully.',
                 'processed_path' => $processedRelativePath
