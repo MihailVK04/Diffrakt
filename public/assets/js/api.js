@@ -100,6 +100,10 @@ const users = {
         const qs = cursor !== null ? `?cursor=${cursor}` : '';
         return get(`/users/${encodeURIComponent(username)}/posts${qs}`);
     },
+
+    search(q) {
+        return get(`/users/search?q=${encodeURIComponent(q)}`);
+    },
 };
 
 const posts = {

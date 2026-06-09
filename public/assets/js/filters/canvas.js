@@ -121,7 +121,7 @@ export function brightness(imageData, params = {}) {
     for (let i = 0; i < data.length; i += 4) {
         data[i] += level;
         data[i + 1] += level;
-        data[i + 1] += level;
+        data[i + 2] += level;
     }
 
     return imageData;
@@ -263,10 +263,10 @@ export function digitalNoise(imageData, params = {}) {
     const half = intensity / 2;
 
     for (let i = 0; i < data.length; i += 4) {
-        const noise = (Math.random * intensity) - half;
-        data[i] += noise;
-        data[i + 1] += noise;
-        data[i + 2] += noise;
+        const noise = (Math.random() * intensity) - half;
+        data[i]     = Math.max(0, Math.min(255, data[i]     + noise));
+        data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise));
+        data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise));
     }
 
     return imageData;

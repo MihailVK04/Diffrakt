@@ -34,8 +34,14 @@ class UserController {
         $followingCount = $db->fetchOne('SELECT COUNT(*) as count FROM follows WHERE follower_id = ?', [$user['id']])['count'] ?? 0;
 
         $user['is_following'] = $isFollowing;
-        $user['followers_count'] = (int)$followersCount;
+        $user['follower_count'] = (int)$followersCount;
         $user['following_count'] = (int)$followingCount;
+
+        $postCount = $db->fetchOne(
+            'SELECT COUNT(*) as count FROM posts WHERE user_id = ?',
+            [$user['id']]
+        )['count'] ?? 0;
+        $user['post_count'] = (int)$postCount;
 
         Response::json(['user' => $user]);
     }
@@ -125,5 +131,29 @@ class UserController {
         );
 
         Response::json(['message' => 'Unfollowed successfully.']);
+    }
+
+    public function search(Request $request): void {
+        $q = trim($_GET['q'] ?? '');
+
+        if (mb_strlen($q) < 2) {
+            Response::json(['users' => []]);
+            return;
+        }
+
+        $q = mb_substr($q, 0, 50);
+
+        $db = Database::getInstance();
+
+        $rows = $db->fetchAll(
+            'SELECT id, username, avatar_path, bio
+            FROM users
+            WHERE username LIKE ?
+        ORDER BY username
+            LIMIT 20',
+            ['%' . $q . '%']
+        );
+
+        Response::json(['users' => $rows]);
     }
 }

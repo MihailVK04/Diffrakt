@@ -5,28 +5,28 @@ namespace Diffrakt\Filters;
 
 class SaturationFilter implements FilterInterface {
     public function apply(\GdImage $image, array $params): \GdImage {
-        $level = (float)($params['level'] ?? 1.0); 
-        $width = imagesx($image);
-        $height = imagesy($image);
+        $level  = (float)\max(-100, \min(0, $params['level'] ?? -50));
+        $factor = -$level / 100.0;
 
-        for ($x = 0; $x < $width; $x++) {
-            for ($y = 0; $y < $height; $y++) {
-                $rgb = imagecolorat($image, $x, $y);
-                $r = ($rgb >> 16) & 0xFF;
-                $g = ($rgb >> 8) & 0xFF;
-                $b = $rgb & 0xFF;
+        $width  = \imagesx($image);
+        $height = \imagesy($image);
 
-                $lum = 0.299 * $r + 0.587 * $g + 0.114 * $b;
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $rgb = \imagecolorat($image, $x, $y);
+                $r   = ($rgb >> 16) & 0xFF;
+                $g   = ($rgb >> 8)  & 0xFF;
+                $b   =  $rgb        & 0xFF;
 
-                $newR = max(0, min(255, (int)($lum + ($r - $lum) * $level)));
-                $newG = max(0, min(255, (int)($lum + ($g - $lum) * $level)));
-                $newB = max(0, min(255, (int)($lum + ($b - $lum) * $level)));
+                $lum  = 0.299 * $r + 0.587 * $g + 0.114 * $b;
+                $newR = (int)\max(0, \min(255, $r + $factor * ($lum - $r)));
+                $newG = (int)\max(0, \min(255, $g + $factor * ($lum - $g)));
+                $newB = (int)\max(0, \min(255, $b + $factor * ($lum - $b)));
 
-                $color = ($newR << 16) | ($newG << 8) | $newB;
-                imagesetpixel($image, $x, $y, $color);
+                \imagesetpixel($image, $x, $y, ($newR << 16) | ($newG << 8) | $newB);
             }
         }
-        
-        return $image; 
+
+        return $image;
     }
 }
