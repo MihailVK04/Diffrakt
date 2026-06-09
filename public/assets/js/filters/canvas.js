@@ -121,7 +121,7 @@ export function brightness(imageData, params = {}) {
     for (let i = 0; i < data.length; i += 4) {
         data[i] += level;
         data[i + 1] += level;
-        data[i + 1] += level;
+        data[i + 2] += level;
     }
 
     return imageData;
