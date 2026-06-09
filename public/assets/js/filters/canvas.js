@@ -263,7 +263,7 @@ export function digitalNoise(imageData, params = {}) {
     const half = intensity / 2;
 
     for (let i = 0; i < data.length; i += 4) {
-        const noise = (Math.random * intensity) - half;
+        const noise = (Math.random() * intensity) - half;
         data[i] += noise;
         data[i + 1] += noise;
         data[i + 2] += noise;
