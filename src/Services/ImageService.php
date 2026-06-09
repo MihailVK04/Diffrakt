@@ -15,26 +15,26 @@ class ImageService {
         $mime = $finfo->file($uploadedFile['tmp_name']);
         $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         
-        if (!in_array($mime, $allowed)) {
+        if (!\in_array($mime, $allowed)) {
             throw new \InvalidArgumentException('Invalid file type.');
         }
 
-        $info = getimagesize($uploadedFile['tmp_name']);
+        $info = \getimagesize($uploadedFile['tmp_name']);
         if ($info && ($info[0] * $info[1] > 20000000)) { 
             throw new \RuntimeException('Image too large for processing.');
         }
 
-        $extension = pathinfo($uploadedFile['name'], PATHINFO_EXTENSION) ?: 'jpg';
+        $extension = \pathinfo($uploadedFile['name'], PATHINFO_EXTENSION) ?: 'jpg';
         $originalPath = $this->storage->storeUploadedFile($uploadedFile, 'originals', $extension);
         
-        $thumbRelativePath = 'thumbs/' . bin2hex(random_bytes(16)) . '.jpg';
-        $absoluteThumbPath = $this->storage->getPath('thumbs', basename($thumbRelativePath));
+        $thumbRelativePath = 'thumbs/' . \bin2hex(\random_bytes(16)) . '.jpg';
+        $absoluteThumbPath = $this->storage->getPath('thumbs', \basename($thumbRelativePath));
         
-        if (!is_dir(dirname($absoluteThumbPath))) {
-            mkdir(dirname($absoluteThumbPath), 0755, true);
+        if (!\is_dir(\dirname($absoluteThumbPath))) {
+            \mkdir(\dirname($absoluteThumbPath), 0755, true);
         }
 
-        [$origCat, $origFile] = explode('/', $originalPath, 2);
+        [$origCat, $origFile] = \explode('/', $originalPath, 2);
         $absoluteOriginal = $this->storage->getPath($origCat, $origFile);
         
         $this->generateThumbnail($absoluteOriginal, $absoluteThumbPath);
@@ -43,37 +43,37 @@ class ImageService {
     }
 
     public function generateThumbnail(string $sourceFile, string $destFile): void {
-        if (!file_exists($sourceFile)) {
+        if (!\file_exists($sourceFile)) {
             throw new \RuntimeException('Source file does not exist.');
         }
 
-        $mime = mime_content_type($sourceFile);
+        $mime = \mime_content_type($sourceFile);
         
-        $image = imagecreatefromstring(file_get_contents($sourceFile));
+        $image = \imagecreatefromstring(\file_get_contents($sourceFile));
 
         if (!$image) {
             throw new \RuntimeException('Failed to read image data.');
         }
 
-        $width = imagesx($image);
-        $height = imagesy($image);
+        $width = \imagesx($image);
+        $height = \imagesy($image);
         $newWidth = 800;
 
         if ($width > $newWidth) {
             $newHeight = (int)($height * ($newWidth / $width));
-            $scaledImage = imagescale($image, $newWidth, $newHeight);
+            $scaledImage = \imagescale($image, $newWidth, $newHeight);
             if ($scaledImage !== false) {
                 $image = $scaledImage;
             }
         }
 
-        imagejpeg($image, $destFile, 85);
+        \imagejpeg($image, $destFile, 85);
     }
 
     public function serveFile(string $absolutePath, string $mime): void {
         header('Content-Type: ' . $mime);
-        header('Content-Length: ' . filesize($absolutePath));
-        readfile($absolutePath);
+        header('Content-Length: ' . \filesize($absolutePath));
+        \readfile($absolutePath);
         exit;
     }
 }
