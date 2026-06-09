@@ -47,8 +47,8 @@ let _userFetched = false;
 
 async function fetchCurrentUser() {
     try {
-        const user = await api.auth.me();
-        return user ?? null;
+        const data = await api.auth.me();
+        return data.user ?? null;
     } catch {
         return null;
     }
