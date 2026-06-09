@@ -39,6 +39,11 @@ class Request {
             $uri = substr($uri, 0, $pos);
         }
 
+        $base = rtrim(dirname($_SERVER['SCRIPT_NAME'], 2), '/\\');
+        if ($base !== '' && str_starts_with($uri, $base)) {
+            $uri = substr($uri, strlen($base));
+        }
+
         $uri = '/' . ltrim($uri, '/');
         $uri = rtrim($uri, '/') ?: '/';
 
