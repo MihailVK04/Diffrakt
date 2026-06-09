@@ -1207,6 +1207,10 @@ input, textarea, select {
     color: var(--color-text-on-dark);
     background-color: rgba(242, 167, 102, 0.18);
 }
+
+#nav:not([hidden]) {
+    display: block;
+}
  
 @media (max-width: 30em) {
     .nav__inner {
