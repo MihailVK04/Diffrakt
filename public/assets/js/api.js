@@ -1,4 +1,5 @@
-const BASE_URL = '/api/v1';
+const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+const BASE_URL = `${BASE}/api/v1`;
 
 async function _request(method, path, body = null, opts = {}) {
     const headers = {};

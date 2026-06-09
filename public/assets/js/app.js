@@ -30,6 +30,8 @@ import { EditorView } from './views/editor.js';
 import { ProfileView } from './views/profile.js';
 import { HomeView } from './views/home.js';
 
+const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+
 const ROUTES = [
     { pattern: '/', view: HomeView, auth: false},
     { pattern: '/feed', view: FeedView, auth: true},
@@ -145,7 +147,7 @@ function renderError(container, err) {
 }
 
 function navigate(path, _state = {}) {
-    window.history.pushState(_state, '', path);
+    window.history.pushState(_state, '', BASE + path);
     renderRoute(path);
 }
 
@@ -161,7 +163,7 @@ function handleLinkClick(e) {
 }
 
 function handlePopState() {
-    renderRoute(window.location.pathname);
+    renderRoute(window.location.pathname.replace(BASE, '') || '/');
 }
 
 window.app = {
@@ -173,5 +175,5 @@ window.app = {
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', handleLinkClick);
     window.addEventListener('popstate', handlePopState);
-    renderRoute(window.location.pathname);
+    renderRoute(window.location.pathname.replace(BASE, '') || '/');
 });
