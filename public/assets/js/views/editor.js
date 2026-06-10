@@ -107,6 +107,7 @@ export class EditorView {
         }
  
         this._renderFilterPicker();
+        await this._loadAndRenderUserFilters();
     }
  
     destroy() {
@@ -133,11 +134,11 @@ export class EditorView {
             const raw = await api.posts.get(postId);
             this._post = raw.post ?? raw;
  
-            const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
-            this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
+            this._imageEl = await this._loadImage(this._post.thumb_url);
  
             if (this._post.pipeline_id) {
-                this._pipeline = await api.pipelines.get(this._post.pipeline_id);
+                const pipelineResponse = await api.pipelines.get(this._post.pipeline_id);
+                this._pipeline = pipelineResponse.pipeline ?? pipelineResponse;
                 this._steps = this._pipeline.steps ?? [];
             } else {
                 this._pipeline = await api.pipelines.create(`Post ${postId} pipeline`);
@@ -172,7 +173,7 @@ export class EditorView {
                 this._post = await api.posts.upload(file, '', 'public');
                 this._postId = this._post.id;
                 const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
-                this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
+                this._imageEl = await this._loadImage(this._post.thumb_url);
                 this._pipeline = await api.pipelines.create(`Post ${this._postId} pipeline`);
                 this._steps = [];
  
@@ -352,26 +353,27 @@ export class EditorView {
  
     _bindSave() {
         const handler = async () => {
-            if (!this._pipeline) {
-                this._setGlobalError('No pipeline to save — upload an image first.');
+            if (!this._postId || !this._pipeline) {
+                this._setGlobalError('Upload an image first.');
                 return;
             }
- 
+
             this._saveBtn.disabled = true;
             this._setGlobalError('');
- 
+
             const steps = this._steps.map((step, i) => ({
                 step_order: i + 1,
                 filter_id: step.filter_id,
                 sub_pipeline_id: null,
                 params: step.params ?? {},
             }));
- 
+
             try {
                 await api.pipelines.replaceSteps(this._pipeline.id, steps);
-                this._showToast('Pipeline saved.');
+                await api.posts.publish(this._postId, this._pipeline.id);
+                this._showToast('Post published.');
             } catch (err) {
-                this._setGlobalError(err.message ?? 'Save failed. Please try again.');
+                this._setGlobalError(err.message ?? 'Publish failed. Please try again.');
             } finally {
                 this._saveBtn.disabled = false;
             }
@@ -387,26 +389,18 @@ export class EditorView {
                 this._setGlobalError('Save your pipeline before exporting.');
                 return;
             }
- 
+
             this._exportBtn.disabled = true;
             this._setGlobalError('');
- 
+
             try {
-                const steps = this._steps.map((step, i) => ({
-                    step_order: i + 1,
-                    filter_id: step.filter_id,
-                    sub_pipeline_id: null,
-                    params: step.params ?? {},
-                }));
-                await api.pipelines.replaceSteps(this._pipeline.id, steps);
- 
                 const result = await api.posts.export(this._postId, this._pipeline.id);
- 
+
                 const a = document.createElement('a');
                 a.href = result.download_url;
                 a.download = `diffrakt-export-${this._postId}.jpg`;
                 a.click();
- 
+
                 this._showToast('Export ready — downloading.');
             } catch (err) {
                 this._setGlobalError(err.message ?? 'Export failed. Please try again.');
@@ -416,22 +410,38 @@ export class EditorView {
         };
 
         this._exportBtn.addEventListener('click', handler);
-        this._listeners.push({ el: this._exportBtn, type: 'click', fn: handler});
+        this._listeners.push({ el: this._exportBtn, type: 'click', fn: handler });
     }
  
     _bindSaveFilter() {
-        const handler = async () => {
+        const form = this._container.querySelector('[id="editor-save-filter-form"]');
+        const input = this._container.querySelector('[id="editor-save-filter-input"]');
+        const confirmBtn = this._container.querySelector('[id="editor-save-filter-confirm"]');
+        const cancelBtn = this._container.querySelector('[id="editor-save-filter-cancel"]');
+
+        const showHandler = () => {
             if (!this._pipeline || this._steps.length === 0) {
                 this._setGlobalError('Add at least one filter step before saving as a filter.');
                 return;
             }
- 
-            const name = prompt('Name for this filter:');
-            if (!name || !name.trim()) return;
- 
-            this._saveFilterBtn.disabled = true;
+            form.hidden = false;
+            this._saveFilterBtn.hidden = true;
+            input.focus();
+        };
+
+        const cancelHandler = () => {
+            form.hidden = true;
+            this._saveFilterBtn.hidden = false;
+            input.value = '';
+        };
+
+        const confirmHandler = async () => {
+            const name = input.value.trim();
+            if (!name) return;
+
+            confirmBtn.disabled = true;
             this._setGlobalError('');
- 
+
             try {
                 const steps = this._steps.map((step, i) => ({
                     step_order: i + 1,
@@ -440,17 +450,24 @@ export class EditorView {
                     params: step.params ?? {},
                 }));
                 await api.pipelines.replaceSteps(this._pipeline.id, steps);
-                await api.filters.create(name.trim(), this._pipeline.id);
-                this._showToast(`Filter "${name.trim()}" saved.`);
+                await api.filters.create(name, this._pipeline.id);
+                this._showToast(`Filter "${name}" saved.`);
+                cancelHandler();
+                await this._loadAndRenderUserFilters();
             } catch (err) {
                 this._setGlobalError(err.message ?? 'Could not save filter. Please try again.');
             } finally {
-                this._saveFilterBtn.disabled = false;
+                confirmBtn.disabled = false;
             }
         };
 
-        this._saveFilterBtn.addEventListener('click', handler);
-        this._listeners.push({ el: this._saveFilterBtn, type: 'click', fn: handler});
+        this._saveFilterBtn.addEventListener('click', showHandler);
+        confirmBtn.addEventListener('click', confirmHandler);
+        cancelBtn.addEventListener('click', cancelHandler);
+
+        this._listeners.push({ el: this._saveFilterBtn, type: 'click', fn: showHandler });
+        this._listeners.push({ el: confirmBtn, type: 'click', fn: confirmHandler });
+        this._listeners.push({ el: cancelBtn, type: 'click', fn: cancelHandler });
     }
  
     _buildShellHTML() {
@@ -477,9 +494,15 @@ export class EditorView {
             </div>
  
             <div class="editor__preview-actions">
-                <button id="editor-save-btn"        class="btn btn--primary"   type="button">Save pipeline</button>
+                <button id="editor-save-btn" class="btn btn--primary" type="button">Publish</button>
                 <button id="editor-export-btn"      class="btn btn--secondary" type="button">Export</button>
                 <button id="editor-save-filter-btn" class="btn btn--ghost"     type="button">Save as filter</button>
+
+                <div id="editor-save-filter-form" class="editor__save-filter-form" hidden>
+                    <input id="editor-save-filter-input" class="form__input" type="text" placeholder="Filter name" maxlength="80">
+                    <button id="editor-save-filter-confirm" class="btn btn--primary" type="button">Save</button>
+                    <button id="editor-save-filter-cancel" class="btn btn--ghost" type="button">Cancel</button>
+                </div>
             </div>
         </section>
  
@@ -487,6 +510,9 @@ export class EditorView {
         <section class="editor__controls-panel">
             <h2 class="editor__section-title">Filters</h2>
             <div id="editor-filter-list" class="editor__filter-list"></div>
+
+            <h2 class="editor__section-title">My Filters</h2>
+            <div id="editor-user-filters" class="editor__filter-list"></div>
  
             <h2 class="editor__section-title">Pipeline</h2>
             <ul id="editor-step-list" class="editor__step-list"></ul>
@@ -520,6 +546,66 @@ export class EditorView {
         toast.textContent = message;
         this._container.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
+    }
+
+    async _loadAndRenderUserFilters() {
+        try {
+            const data = await api.filters.list();
+            const filters = data.filters ?? [];
+            const userFilters = filters.filter(f => f.pipeline_id !== null);
+
+            const section = this._container.querySelector('[id="editor-user-filters"]');
+            if (!section) return;
+
+            if (userFilters.length === 0) {
+                section.innerHTML = '';
+                return;
+            }
+
+            section.innerHTML = userFilters.map(f => `
+                <button
+                    class="editor__filter-btn btn btn--ghost"
+                    data-pipeline-id="${f.pipeline_id}"
+                    type="button"
+                >${this._esc(f.name)}</button>
+            `).join('');
+
+            if (this._boundUserFilterClick) {
+                section.removeEventListener('click', this._boundUserFilterClick);
+            }
+            this._boundUserFilterClick = this._onUserFilterClick.bind(this);
+            section.addEventListener('click', this._boundUserFilterClick);
+            this._listeners.push({ el: section, type: 'click', fn: this._boundUserFilterClick });
+
+        } catch {
+            // non-critical
+        }
+    }
+
+    async _onUserFilterClick(e) {
+        const btn = e.target.closest('[data-pipeline-id]');
+        if (!btn) return;
+        if (!this._imageEl) {
+            this._setGlobalError('Upload or load an image first.');
+            return;
+        }
+
+        const pipelineId = parseInt(btn.dataset.pipelineId, 10);
+        try {
+            const data = await api.pipelines.get(pipelineId);
+            const steps = data.pipeline?.steps ?? data.steps ?? [];
+            for (const step of steps) {
+                this._steps.push({
+                    filter_id: step.filter_id,
+                    sub_pipeline_id: null,
+                    params: step.params ?? {},
+                });
+            }
+            this._renderStepList();
+            this._schedulePreview();
+        } catch (err) {
+            this._setGlobalError(err.message ?? 'Could not load filter.');
+        }
     }
  
     _esc(value) {

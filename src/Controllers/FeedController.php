@@ -25,7 +25,7 @@ class FeedController {
             return [
                 'id' => $p['id'],
                 'caption' => $p['caption'],
-                'thumb_url' => '/api/v1/files?path=' . urlencode($p['thumb_path'] ?? ''),
+                'thumb_url' => '/api/v1/files?path=' . urlencode($p['processed_path'] ?? $p['thumb_path'] ?? ''),
                 'author' => [
                     'username' => $p['username'] ?? '',
                     'avatar_url' => !empty($p['avatar_path']) ? '/api/v1/files?path=' . urlencode($p['avatar_path']) : null

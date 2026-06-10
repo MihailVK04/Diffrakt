@@ -43,6 +43,13 @@ class UserController {
         )['count'] ?? 0;
         $user['post_count'] = (int)$postCount;
 
+        $avatarUrl = null;
+        if ($user['avatar_path']) {
+            $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
+        }
+        $user['avatar_url'] = $avatarUrl;
+        unset($user['avatar_path']);
+
         Response::json(['user' => $user]);
     }
 
@@ -58,7 +65,13 @@ class UserController {
         $limit = $request->input('limit') ? (int)$request->input('limit') : 10;
 
         $posts = Post::getUserPosts((int)$user['id'], $cursor, $limit);
-        
+
+        foreach ($posts as &$post) {
+            $displayPath = $post['processed_path'] ?? $post['thumb_path'];
+            $post['thumb_url'] = 'api/v1/files?path=' . urlencode($displayPath);
+        }
+        unset($post);
+
         $nextCursor = null;
         if (count($posts) === $limit) {
             $nextCursor = (int)end($posts)['id'];
@@ -71,8 +84,9 @@ class UserController {
     }
 
     public function update(Request $request): void {
-        $data = $request->body() ?? [];
-        $errors = Validator::validate($data, [
+        $bio = $_POST['bio'] ?? null;
+
+        $errors = Validator::validate(['bio' => $bio], [
             'bio' => ['max_length:500']
         ]);
 
@@ -81,20 +95,30 @@ class UserController {
         }
 
         $db = Database::getInstance();
-        
-        if (isset($data['bio'])) {
-            $db->execute('UPDATE users SET bio = ? WHERE id = ?', [$data['bio'], $request->userId()]);
+
+        if ($bio !== null) {
+            $db->execute('UPDATE users SET bio = ? WHERE id = ?', [$bio, $request->userId()]);
         }
 
-        if (isset($data['email'])) {
-            $emailErrors = Validator::validate($data, ['email' => ['required', 'email']]);
-            if (!empty($emailErrors)) {
-                Response::unprocessable($emailErrors);
-            }
-            User::updateEmail($request->userId(), $data['email']);
+        $avatarFile = $_FILES['avatar'] ?? null;
+        if ($avatarFile && $avatarFile['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($avatarFile['name'], PATHINFO_EXTENSION));
+            $storage = new \Diffrakt\Services\StorageService();
+            $avatarPath = $storage->storeUploadedFile($avatarFile, 'avatars', $ext);
+            User::updateAvatar($request->userId(), $avatarPath);
         }
 
-        Response::json(['message' => 'Profile updated successfully.']);
+        $user = User::findById($request->userId());
+        $avatarUrl = null;
+        if ($user['avatar_path']) {
+            $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
+        }
+
+        Response::json([
+            'message' => 'Profile updated successfully.',
+            'avatar_url' => $avatarUrl,
+            'bio' => $user['bio'],
+        ]);
     }
 
     public function follow(Request $request): void {

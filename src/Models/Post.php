@@ -41,7 +41,7 @@ class Post {
             FROM posts p
             JOIN users u ON p.user_id = u.id
             JOIN follows f ON f.followee_id = p.user_id
-            WHERE f.follower_id = ? $cursorQuery
+            WHERE f.follower_id = ? AND p.is_published = 1 $cursorQuery
             ORDER BY p.id DESC
             LIMIT ?
         ", $params);
@@ -65,5 +65,12 @@ class Post {
             ORDER BY id DESC
             LIMIT ?
         ", $params);
+    }
+
+    public static function publish(int $id, int $userId): void {
+        Database::getInstance()->execute(
+            'UPDATE posts SET is_published = 1 WHERE id = ? AND user_id = ?',
+            [$id, $userId]
+        );
     }
 }

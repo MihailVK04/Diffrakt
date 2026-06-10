@@ -85,7 +85,7 @@ const users = {
             fd.append('avatar', avatar)
         }
 
-        return _request('PATCH', '/users/me', null, {formData: fd});
+        return _request('POST', '/users/me', null, {formData: fd});
     },
 
     follow(username) {
@@ -130,6 +130,10 @@ const posts = {
 
     export(postId, pipelineId) {
         return post(`/posts/${postId}/export`, { pipeline_id: pipelineId });
+    },
+
+    publish(postId, pipelineId) {
+        return post(`/posts/${postId}/publish`, { pipeline_id: pipelineId });
     },
 };
 
