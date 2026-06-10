@@ -71,8 +71,9 @@ class UserController {
     }
 
     public function update(Request $request): void {
-        $data = $request->body() ?? [];
-        $errors = Validator::validate($data, [
+        $bio = $_POST['bio'] ?? null;
+
+        $errors = Validator::validate(['bio' => $bio], [
             'bio' => ['max_length:500']
         ]);
 
@@ -82,12 +83,11 @@ class UserController {
 
         $db = Database::getInstance();
 
-        if (isset($data['bio'])) {
-            $db->execute('UPDATE users SET bio = ? WHERE id = ?', [$data['bio'], $request->userId()]);
+        if ($bio !== null) {
+            $db->execute('UPDATE users SET bio = ? WHERE id = ?', [$bio, $request->userId()]);
         }
 
-        // Handle avatar upload
-        $avatarFile = $request->file('avatar');
+        $avatarFile = $_FILES['avatar'] ?? null;
         if ($avatarFile && $avatarFile['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($avatarFile['name'], PATHINFO_EXTENSION));
             $storage = new \Diffrakt\Services\StorageService();
@@ -95,7 +95,6 @@ class UserController {
             User::updateAvatar($request->userId(), $avatarPath);
         }
 
-        // Return updated user so frontend can refresh avatar
         $user = User::findById($request->userId());
         $avatarUrl = null;
         if ($user['avatar_path']) {
