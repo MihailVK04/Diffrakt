@@ -497,6 +497,7 @@ export class EditorView {
     }
 
     _loadImage(url) {
+        console.log('_loadImage url:', url);
         const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
         const fullUrl = url.startsWith('http') ? url : `${BASE}/${url.replace(/^\//, '')}`;
 
