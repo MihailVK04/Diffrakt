@@ -133,8 +133,7 @@ export class EditorView {
             const raw = await api.posts.get(postId);
             this._post = raw.post ?? raw;
  
-            const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
-            this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
+            this._imageEl = await this._loadImage(this._post.thumb_url);
  
             if (this._post.pipeline_id) {
                 this._pipeline = await api.pipelines.get(this._post.pipeline_id);
@@ -172,7 +171,7 @@ export class EditorView {
                 this._post = await api.posts.upload(file, '', 'public');
                 this._postId = this._post.id;
                 const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
-                this._imageEl = await this._loadImage(BASE + '/' + this._post.thumb_url);
+                this._imageEl = await this._loadImage(this._post.thumb_url);
                 this._pipeline = await api.pipelines.create(`Post ${this._postId} pipeline`);
                 this._steps = [];
  
@@ -497,7 +496,6 @@ export class EditorView {
     }
 
     _loadImage(url) {
-        console.log('_loadImage url:', url);
         const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
         const fullUrl = url.startsWith('http') ? url : `${BASE}/${url.replace(/^\//, '')}`;
 
