@@ -43,6 +43,13 @@ class UserController {
         )['count'] ?? 0;
         $user['post_count'] = (int)$postCount;
 
+        $avatarUrl = null;
+        if ($user['avatar_path']) {
+            $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
+        }
+        $user['avatar_url'] = $avatarUrl;
+        unset($user['avatar_path']);
+
         Response::json(['user' => $user]);
     }
 
