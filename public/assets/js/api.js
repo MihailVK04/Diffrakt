@@ -85,7 +85,7 @@ const users = {
             fd.append('avatar', avatar)
         }
 
-        return _request('PATCH', '/users/me', null, {formData: fd});
+        return _request('POST', '/users/me', null, {formData: fd});
     },
 
     follow(username) {
