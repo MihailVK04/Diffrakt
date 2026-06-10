@@ -209,7 +209,7 @@ export class FeedView {
     <a class="feed__image-link" href="${this._esc(postUrl)}" data-link>
         <img
             class="feed__image"
-            src="${this._esc(thumb_url)}"
+            src="${this._esc(thumbUrl)}"
             alt="${post.caption ? this._esc(post.caption) : 'Photo by ' + this._esc(post.author.username)}"
             loading="lazy"
         >
