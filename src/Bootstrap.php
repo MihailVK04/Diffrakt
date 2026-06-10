@@ -128,6 +128,7 @@ $router->add('GET', '/api/v1/posts/{id}', [PostController::class, 'get'], false,
 $router->add('PATCH', '/api/v1/posts/{id}', [PostController::class, 'update'], true, null);
 $router->add('DELETE', '/api/v1/posts/{id}', [PostController::class, 'delete'], true, null);
 $router->add('POST', '/api/v1/posts/{id}/export', [PostController::class, 'export'], true, null);
+$router->add('POST', '/api/v1/posts/{id}/publish', [PostController::class, 'publish'], true, null);
 
 $router->add('GET', '/api/v1/filters', [FilterController::class, 'list'], false, null);
 $router->add('GET', '/api/v1/filters/{id}', [FilterController::class, 'get'], false, null);

@@ -131,6 +131,10 @@ const posts = {
     export(postId, pipelineId) {
         return post(`/posts/${postId}/export`, { pipeline_id: pipelineId });
     },
+
+    publish(postId) {
+        return post(`/posts/${postId}/publish`);
+    },
 };
 
 const filters = {

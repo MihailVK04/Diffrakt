@@ -140,4 +140,35 @@ class PostController {
             Response::badRequest('Export failed: ' . $e->getMessage());
         }
     }
+
+    public function publish(Request $request): void {
+        $postId = (int)($request->params['id'] ?? 0);
+
+        $post = Post::findById($postId);
+        if (!$post) {
+            Response::notFound('Post not found.');
+        }
+        if ((int)$post['user_id'] !== $request->userId()) {
+            Response::forbidden('Access denied.');
+        }
+
+        try {
+            $storage = new StorageService();
+            $runner = new PipelineRunner($storage);
+
+            if ($post['pipeline_id']) {
+                $processedPath = $runner->run($post['original_path'], (int)$post['pipeline_id']);
+                Database::getInstance()->execute(
+                    'UPDATE posts SET processed_path = ? WHERE id = ?',
+                    [$processedPath, $postId]
+                );
+            }
+
+            Post::publish($postId, $request->userId());
+            Response::json(['message' => 'Post published.']);
+
+        } catch (\Exception $e) {
+            Response::badRequest('Publish failed: ' . $e->getMessage());
+        }
+    }
 }

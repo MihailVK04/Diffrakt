@@ -353,26 +353,27 @@ export class EditorView {
  
     _bindSave() {
         const handler = async () => {
-            if (!this._pipeline) {
-                this._setGlobalError('No pipeline to save — upload an image first.');
+            if (!this._postId || !this._pipeline) {
+                this._setGlobalError('Upload an image first.');
                 return;
             }
- 
+
             this._saveBtn.disabled = true;
             this._setGlobalError('');
- 
+
             const steps = this._steps.map((step, i) => ({
                 step_order: i + 1,
                 filter_id: step.filter_id,
                 sub_pipeline_id: null,
                 params: step.params ?? {},
             }));
- 
+
             try {
                 await api.pipelines.replaceSteps(this._pipeline.id, steps);
-                this._showToast('Pipeline saved.');
+                await api.posts.publish(this._postId);
+                this._showToast('Post published.');
             } catch (err) {
-                this._setGlobalError(err.message ?? 'Save failed. Please try again.');
+                this._setGlobalError(err.message ?? 'Publish failed. Please try again.');
             } finally {
                 this._saveBtn.disabled = false;
             }
@@ -493,7 +494,7 @@ export class EditorView {
             </div>
  
             <div class="editor__preview-actions">
-                <button id="editor-save-btn"        class="btn btn--primary"   type="button">Save pipeline</button>
+                <button id="editor-save-btn" class="btn btn--primary" type="button">Publish</button>
                 <button id="editor-export-btn"      class="btn btn--secondary" type="button">Export</button>
                 <button id="editor-save-filter-btn" class="btn btn--ghost"     type="button">Save as filter</button>
 
