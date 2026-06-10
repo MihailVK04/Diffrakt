@@ -51,7 +51,8 @@ class PostController {
             Response::notFound('Post not found.');
         }
 
-        $post['thumb_url'] = 'api/v1/files?path=' . urlencode($post['thumb_path']);
+        $displayPath = $post['processed_path'] ?? $post['thumb_path'];
+        $post['thumb_url'] = 'api/v1/files?path=' . urlencode($displayPath);
         if ($post['processed_path']) {
             $post['processed_url'] = 'api/v1/files?path=' . urlencode($post['processed_path']);
         }
@@ -138,6 +139,39 @@ class PostController {
             ]);
         } catch (\Exception $e) {
             Response::badRequest('Export failed: ' . $e->getMessage());
+        }
+    }
+
+    public function publish(Request $request): void {
+        $postId = (int)($request->params['id'] ?? 0);
+        $data = $request->body() ?? [];
+        $pipelineId = (int)($data['pipeline_id'] ?? 0);
+
+        if ($pipelineId === 0) {
+            Response::badRequest('pipeline_id is required.');
+        }
+
+        $post = Post::findById($postId);
+        if (!$post) {
+            Response::notFound('Post not found.');
+        }
+        if ((int)$post['user_id'] !== $request->userId()) {
+            Response::forbidden('Access denied.');
+        }
+
+        try {
+            $storage = new StorageService();
+            $runner = new PipelineRunner($storage);
+            $processedPath = $runner->run($post['original_path'], $pipelineId);
+
+            Database::getInstance()->execute(
+                'UPDATE posts SET processed_path = ?, is_published = 1 WHERE id = ?',
+                [$processedPath, $postId]
+            );
+
+            Response::json(['message' => 'Post published.']);
+        } catch (\Exception $e) {
+            Response::badRequest('Publish failed: ' . $e->getMessage());
         }
     }
 }

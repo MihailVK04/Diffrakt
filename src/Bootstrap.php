@@ -118,7 +118,7 @@ $router->add('GET', '/api/v1/auth/me', [AuthController::class, 'me'], true, null
 $router->add('GET', '/api/v1/users/search', [UserController::class, 'search'], false);
 $router->add('GET', '/api/v1/users/{username}', [UserController::class, 'profile'], false, null);
 // НОВ РЕД ЗА SPEC 005: Endpoint за снимките на потребителя с пагинация
-$router->add('PATCH', '/api/v1/users/me', [UserController::class, 'update'], true, null);
+$router->add('POST', '/api/v1/users/me', [UserController::class, 'update'], true, null);
 $router->add('GET', '/api/v1/users/{username}/posts', [UserController::class, 'posts'], false, null);
 $router->add('POST', '/api/v1/users/{username}/follow', [UserController::class, 'follow'], true, null);
 $router->add('DELETE', '/api/v1/users/{username}/follow', [UserController::class, 'unfollow'], true, null);
@@ -128,6 +128,7 @@ $router->add('GET', '/api/v1/posts/{id}', [PostController::class, 'get'], false,
 $router->add('PATCH', '/api/v1/posts/{id}', [PostController::class, 'update'], true, null);
 $router->add('DELETE', '/api/v1/posts/{id}', [PostController::class, 'delete'], true, null);
 $router->add('POST', '/api/v1/posts/{id}/export', [PostController::class, 'export'], true, null);
+$router->add('POST', '/api/v1/posts/{id}/publish', [PostController::class, 'publish'], true, null);
 
 $router->add('GET', '/api/v1/filters', [FilterController::class, 'list'], false, null);
 $router->add('GET', '/api/v1/filters/{id}', [FilterController::class, 'get'], false, null);

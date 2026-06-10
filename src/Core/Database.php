@@ -238,7 +238,7 @@ final class Database
      */
     private function requireEnv(string $key): string
     {
-        $value = $_ENV[$key] ?? $_SERVER[$key] ?? null;
+        $value = $_ENV[$key] ?? $_SERVER[$key] ?? (getenv($key) ?: null);
 
         if ($value === null || $value === '') {
             throw new RuntimeException(

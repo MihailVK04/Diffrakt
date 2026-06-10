@@ -161,22 +161,35 @@ export class FeedView {
     }
 
     _buildPostHTML(post) {
-        const authorUrl  = `/profile/${encodeURIComponent(post.author.username)}`;
-        const postUrl    = `/editor/${encodeURIComponent(post.id)}`;
-        const avatarHTML = post.author.avatar_url
+        const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+
+        const authorUrl = `/profile/${encodeURIComponent(post.author.username)}`;
+        const postUrl   = `/editor/${encodeURIComponent(post.id)}`;
+
+        const thumbUrl  = post.thumb_url?.startsWith('http')
+            ? post.thumb_url
+            : `${BASE}/${(post.thumb_url ?? '').replace(/^\//, '')}`;
+
+        const avatarUrl = post.author.avatar_url?.startsWith('http')
+            ? post.author.avatar_url
+            : post.author.avatar_url
+                ? `${BASE}/${post.author.avatar_url.replace(/^\//, '')}`
+                : null;
+
+        const avatarHTML = avatarUrl
             ? `<img
-                   class="feed__avatar"
-                   src="${this._esc(post.author.avatar_url)}"
-                   alt="${this._esc(post.author.username)}'s avatar"
-                   width="32"
-                   height="32"
-               >`
+                class="feed__avatar"
+                src="${this._esc(avatarUrl)}"
+                alt="${this._esc(post.author.username)}'s avatar"
+                width="32"
+                height="32"
+            >`
             : `<span class="feed__avatar feed__avatar--placeholder" aria-hidden="true"></span>`;
- 
+
         const captionHTML = post.caption
             ? `<p class="feed__caption">${this._esc(post.caption)}</p>`
             : '';
- 
+
         const date      = new Date(post.created_at);
         const dateISO   = date.toISOString();
         const dateLabel = date.toLocaleDateString(undefined, {
@@ -196,7 +209,7 @@ export class FeedView {
     <a class="feed__image-link" href="${this._esc(postUrl)}" data-link>
         <img
             class="feed__image"
-            src="${this._esc(post.thumb_url)}"
+            src="${this._esc(thumbUrl)}"
             alt="${post.caption ? this._esc(post.caption) : 'Photo by ' + this._esc(post.author.username)}"
             loading="lazy"
         >
