@@ -387,26 +387,18 @@ export class EditorView {
                 this._setGlobalError('Save your pipeline before exporting.');
                 return;
             }
- 
+
             this._exportBtn.disabled = true;
             this._setGlobalError('');
- 
+
             try {
-                const steps = this._steps.map((step, i) => ({
-                    step_order: i + 1,
-                    filter_id: step.filter_id,
-                    sub_pipeline_id: null,
-                    params: step.params ?? {},
-                }));
-                await api.pipelines.replaceSteps(this._pipeline.id, steps);
- 
                 const result = await api.posts.export(this._postId, this._pipeline.id);
- 
+
                 const a = document.createElement('a');
                 a.href = result.download_url;
                 a.download = `diffrakt-export-${this._postId}.jpg`;
                 a.click();
- 
+
                 this._showToast('Export ready — downloading.');
             } catch (err) {
                 this._setGlobalError(err.message ?? 'Export failed. Please try again.');
@@ -416,7 +408,7 @@ export class EditorView {
         };
 
         this._exportBtn.addEventListener('click', handler);
-        this._listeners.push({ el: this._exportBtn, type: 'click', fn: handler});
+        this._listeners.push({ el: this._exportBtn, type: 'click', fn: handler });
     }
  
     _bindSaveFilter() {
@@ -575,8 +567,43 @@ export class EditorView {
                     type="button"
                 >${this._esc(f.name)}</button>
             `).join('');
+
+            // Remove old listener if re-rendering (called after save)
+            if (this._boundUserFilterClick) {
+                section.removeEventListener('click', this._boundUserFilterClick);
+            }
+            this._boundUserFilterClick = this._onUserFilterClick.bind(this);
+            section.addEventListener('click', this._boundUserFilterClick);
+            this._listeners.push({ el: section, type: 'click', fn: this._boundUserFilterClick });
+
         } catch {
             // non-critical
+        }
+    }
+
+    async _onUserFilterClick(e) {
+        const btn = e.target.closest('[data-pipeline-id]');
+        if (!btn) return;
+        if (!this._imageEl) {
+            this._setGlobalError('Upload or load an image first.');
+            return;
+        }
+
+        const pipelineId = parseInt(btn.dataset.pipelineId, 10);
+        try {
+            const pipeline = await api.pipelines.get(pipelineId);
+            const steps = pipeline.steps ?? [];
+            for (const step of steps) {
+                this._steps.push({
+                    filter_id: step.filter_id,
+                    sub_pipeline_id: null,
+                    params: step.params ?? {},
+                });
+            }
+            this._renderStepList();
+            this._schedulePreview();
+        } catch (err) {
+            this._setGlobalError(err.message ?? 'Could not load filter.');
         }
     }
  
