@@ -107,6 +107,7 @@ export class EditorView {
         }
  
         this._renderFilterPicker();
+        await this._loadAndRenderUserFilters();
     }
  
     destroy() {
@@ -419,18 +420,34 @@ export class EditorView {
     }
  
     _bindSaveFilter() {
-        const handler = async () => {
+        const form = this._container.querySelector('[id="editor-save-filter-form"]');
+        const input = this._container.querySelector('[id="editor-save-filter-input"]');
+        const confirmBtn = this._container.querySelector('[id="editor-save-filter-confirm"]');
+        const cancelBtn = this._container.querySelector('[id="editor-save-filter-cancel"]');
+
+        const showHandler = () => {
             if (!this._pipeline || this._steps.length === 0) {
                 this._setGlobalError('Add at least one filter step before saving as a filter.');
                 return;
             }
- 
-            const name = prompt('Name for this filter:');
-            if (!name || !name.trim()) return;
- 
-            this._saveFilterBtn.disabled = true;
+            form.hidden = false;
+            this._saveFilterBtn.hidden = true;
+            input.focus();
+        };
+
+        const cancelHandler = () => {
+            form.hidden = true;
+            this._saveFilterBtn.hidden = false;
+            input.value = '';
+        };
+
+        const confirmHandler = async () => {
+            const name = input.value.trim();
+            if (!name) return;
+
+            confirmBtn.disabled = true;
             this._setGlobalError('');
- 
+
             try {
                 const steps = this._steps.map((step, i) => ({
                     step_order: i + 1,
@@ -439,17 +456,24 @@ export class EditorView {
                     params: step.params ?? {},
                 }));
                 await api.pipelines.replaceSteps(this._pipeline.id, steps);
-                await api.filters.create(name.trim(), this._pipeline.id);
-                this._showToast(`Filter "${name.trim()}" saved.`);
+                await api.filters.create(name, this._pipeline.id);
+                this._showToast(`Filter "${name}" saved.`);
+                cancelHandler();
+                await this._loadAndRenderUserFilters();
             } catch (err) {
                 this._setGlobalError(err.message ?? 'Could not save filter. Please try again.');
             } finally {
-                this._saveFilterBtn.disabled = false;
+                confirmBtn.disabled = false;
             }
         };
 
-        this._saveFilterBtn.addEventListener('click', handler);
-        this._listeners.push({ el: this._saveFilterBtn, type: 'click', fn: handler});
+        this._saveFilterBtn.addEventListener('click', showHandler);
+        confirmBtn.addEventListener('click', confirmHandler);
+        cancelBtn.addEventListener('click', cancelHandler);
+
+        this._listeners.push({ el: this._saveFilterBtn, type: 'click', fn: showHandler });
+        this._listeners.push({ el: confirmBtn, type: 'click', fn: confirmHandler });
+        this._listeners.push({ el: cancelBtn, type: 'click', fn: cancelHandler });
     }
  
     _buildShellHTML() {
@@ -479,6 +503,12 @@ export class EditorView {
                 <button id="editor-save-btn"        class="btn btn--primary"   type="button">Save pipeline</button>
                 <button id="editor-export-btn"      class="btn btn--secondary" type="button">Export</button>
                 <button id="editor-save-filter-btn" class="btn btn--ghost"     type="button">Save as filter</button>
+
+                <div id="editor-save-filter-form" class="editor__save-filter-form" hidden>
+                    <input id="editor-save-filter-input" class="form__input" type="text" placeholder="Filter name" maxlength="80">
+                    <button id="editor-save-filter-confirm" class="btn btn--primary" type="button">Save</button>
+                    <button id="editor-save-filter-cancel" class="btn btn--ghost" type="button">Cancel</button>
+                </div>
             </div>
         </section>
  
@@ -486,6 +516,9 @@ export class EditorView {
         <section class="editor__controls-panel">
             <h2 class="editor__section-title">Filters</h2>
             <div id="editor-filter-list" class="editor__filter-list"></div>
+
+            <h2 class="editor__section-title">My Filters</h2>
+            <div id="editor-user-filters" class="editor__filter-list"></div>
  
             <h2 class="editor__section-title">Pipeline</h2>
             <ul id="editor-step-list" class="editor__step-list"></ul>
@@ -519,6 +552,32 @@ export class EditorView {
         toast.textContent = message;
         this._container.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
+    }
+
+    async _loadAndRenderUserFilters() {
+        try {
+            const data = await api.filters.list();
+            const filters = data.filters ?? [];
+            const userFilters = filters.filter(f => f.pipeline_id !== null);
+
+            const section = this._container.querySelector('[id="editor-user-filters"]');
+            if (!section) return;
+
+            if (userFilters.length === 0) {
+                section.innerHTML = '';
+                return;
+            }
+
+            section.innerHTML = userFilters.map(f => `
+                <button
+                    class="editor__filter-btn btn btn--ghost"
+                    data-pipeline-id="${f.pipeline_id}"
+                    type="button"
+                >${this._esc(f.name)}</button>
+            `).join('');
+        } catch {
+            // non-critical
+        }
     }
  
     _esc(value) {
