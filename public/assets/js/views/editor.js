@@ -370,7 +370,7 @@ export class EditorView {
 
             try {
                 await api.pipelines.replaceSteps(this._pipeline.id, steps);
-                await api.posts.publish(this._postId);
+                await api.posts.publish(this._postId, this._pipeline.id);
                 this._showToast('Post published.');
             } catch (err) {
                 this._setGlobalError(err.message ?? 'Publish failed. Please try again.');

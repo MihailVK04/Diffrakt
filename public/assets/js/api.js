@@ -132,8 +132,8 @@ const posts = {
         return post(`/posts/${postId}/export`, { pipeline_id: pipelineId });
     },
 
-    publish(postId) {
-        return post(`/posts/${postId}/publish`);
+    publish(postId, pipelineId) {
+        return post(`/posts/${postId}/publish`, { pipeline_id: pipelineId });
     },
 };
 

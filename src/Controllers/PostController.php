@@ -144,6 +144,12 @@ class PostController {
 
     public function publish(Request $request): void {
         $postId = (int)($request->params['id'] ?? 0);
+        $data = $request->body() ?? [];
+        $pipelineId = (int)($data['pipeline_id'] ?? 0);
+
+        if ($pipelineId === 0) {
+            Response::badRequest('pipeline_id is required.');
+        }
 
         $post = Post::findById($postId);
         if (!$post) {
@@ -156,18 +162,14 @@ class PostController {
         try {
             $storage = new StorageService();
             $runner = new PipelineRunner($storage);
+            $processedPath = $runner->run($post['original_path'], $pipelineId);
 
-            if ($post['pipeline_id']) {
-                $processedPath = $runner->run($post['original_path'], (int)$post['pipeline_id']);
-                Database::getInstance()->execute(
-                    'UPDATE posts SET processed_path = ? WHERE id = ?',
-                    [$processedPath, $postId]
-                );
-            }
+            Database::getInstance()->execute(
+                'UPDATE posts SET processed_path = ?, is_published = 1 WHERE id = ?',
+                [$processedPath, $postId]
+            );
 
-            Post::publish($postId, $request->userId());
             Response::json(['message' => 'Post published.']);
-
         } catch (\Exception $e) {
             Response::badRequest('Publish failed: ' . $e->getMessage());
         }
