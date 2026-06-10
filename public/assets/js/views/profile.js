@@ -235,47 +235,82 @@ export class ProfileView {
         const errorEl = this._container.querySelector('[id="profile-edit-error"]');
         const avatarInput = this._container.querySelector('[id="profile-avatar-input"]');
         const avatarPreview = this._container.querySelector('[id="profile-avatar-preview"]');
- 
-        if (!toggleBtn || !form) {
-            return;
-        }
- 
+
+        if (!toggleBtn || !form) return;
+
         toggleBtn.addEventListener('click', () => {
-            form.hidden     = false;
-            toggleBtn.hidden = true;
+            form.classList.remove('profile__edit-form--hidden');
+            toggleBtn.classList.add('u-hidden');
         });
- 
+
         cancelBtn.addEventListener('click', () => {
-            form.hidden      = true;
-            toggleBtn.hidden = false;
+            form.classList.add('profile__edit-form--hidden');
+            toggleBtn.classList.remove('u-hidden');
             errorEl.textContent = '';
         });
- 
+
         avatarInput.addEventListener('change', () => {
             const file = avatarInput.files[0];
             if (!file) return;
-            const url = URL.createObjectURL(file);
-            avatarPreview.src = url;
+            avatarPreview.src = URL.createObjectURL(file);
+            // Ensure it renders as an img if it was a placeholder span
+            if (avatarPreview.tagName !== 'IMG') {
+                const img = document.createElement('img');
+                img.className = avatarPreview.className;
+                img.id = 'profile-avatar-preview';
+                img.width = 96;
+                img.height = 96;
+                img.alt = 'Avatar preview';
+                img.src = URL.createObjectURL(file);
+                avatarPreview.replaceWith(img);
+            }
         });
- 
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorEl.textContent = '';
- 
+
             const bio = form.querySelector('[id="profile-bio-input"]').value;
             const avatar = avatarInput.files[0] ?? undefined;
- 
+
             const submit = form.querySelector('[type="submit"]');
             submit.disabled = true;
- 
+
             try {
-                await api.users.updateMe({ bio, avatar });
- 
+                const result = await api.users.updateMe({ bio, avatar });
+
+                // Update bio in DOM
                 const bioEl = this._container.querySelector('[id="profile-bio"]');
-                if (bioEl) bioEl.textContent = bio;
- 
-                form.hidden = true;
-                toggleBtn.hidden = false;
+                if (bioEl) {
+                    bioEl.textContent = bio;
+                    bioEl.classList.toggle('profile__bio--empty', !bio.trim());
+                }
+
+                // Update avatar in DOM using the URL returned by the server
+                if (result.avatar_url) {
+                    const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+                    const fullUrl = `${BASE}/${result.avatar_url.replace(/^\//, '')}`;
+                    const preview = this._container.querySelector('[id="profile-avatar-preview"]');
+                    if (preview) {
+                        if (preview.tagName === 'IMG') {
+                            preview.src = fullUrl;
+                        } else {
+                            // Was a placeholder span — replace with img
+                            const img = document.createElement('img');
+                            img.className = 'profile__avatar';
+                            img.id = 'profile-avatar-preview';
+                            img.width = 96;
+                            img.height = 96;
+                            img.alt = 'Your avatar';
+                            img.src = fullUrl;
+                            preview.replaceWith(img);
+                        }
+                    }
+                }
+
+                form.classList.add('profile__edit-form--hidden');
+                toggleBtn.classList.remove('u-hidden');
+
             } catch (err) {
                 errorEl.textContent = err.message ?? 'Update failed. Please try again.';
             } finally {
@@ -296,10 +331,15 @@ export class ProfileView {
     }
  
     _buildProfileHTML(profile, isOwnProfile, isAuthenticated) {
+        const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+        const avatarSrc = profile.avatar_url
+            ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${BASE}/${profile.avatar_url.replace(/^\//, '')}`)
+            : null;
+
         const avatarHTML = profile.avatar_url
             ? `<img
                    class="profile__avatar"
-                   src="${this._esc(profile.avatar_url)}"
+                   src="${this._esc(avatarSrc)}"
                    alt="${this._esc(profile.username)}'s avatar"
                    width="96"
                    height="96"
@@ -374,7 +414,7 @@ export class ProfileView {
  
     _buildEditFormHTML(profile) {
         return `
-<form id="profile-edit-form" class="form profile__edit-form" hidden novalidate>
+<form id="profile-edit-form" class="form profile__edit-form profile__edit-form--hidden" novalidate>
     <div class="form__field">
         <label class="form__label" for="profile-avatar-input">Avatar</label>
         <input
@@ -406,18 +446,20 @@ export class ProfileView {
     }
 
     _buildPostItemHTML(post) {
+        const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
         const url = `/editor/${encodeURIComponent(post.id)}`;
+        const thumbUrl = post.thumb_url.startsWith('http') ? post.thumb_url : `${BASE}/${post.thumb_url.replace(/^\//, '')}`;
         const alt = post.caption ? this._esc(post.caption) : `Post by ${this._esc(this._username)}`;
- 
+
         return `
-<a class="profile__post-link" href="${this._esc(url)}" data-link>
-    <img
-        class="profile__post-thumb"
-        src="${this._esc(post.thumb_url)}"
-        alt="${alt}"
-        loading="lazy"
-    >
-</a>`;
+    <a class="profile__post-link" href="${this._esc(url)}" data-link>
+        <img
+            class="profile__post-thumb"
+            src="${this._esc(thumbUrl)}"
+            alt="${alt}"
+            loading="lazy"
+        >
+    </a>`;
     }
  
     _esc(value) {

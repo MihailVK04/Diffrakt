@@ -81,20 +81,32 @@ class UserController {
         }
 
         $db = Database::getInstance();
-        
+
         if (isset($data['bio'])) {
             $db->execute('UPDATE users SET bio = ? WHERE id = ?', [$data['bio'], $request->userId()]);
         }
 
-        if (isset($data['email'])) {
-            $emailErrors = Validator::validate($data, ['email' => ['required', 'email']]);
-            if (!empty($emailErrors)) {
-                Response::unprocessable($emailErrors);
-            }
-            User::updateEmail($request->userId(), $data['email']);
+        // Handle avatar upload
+        $avatarFile = $request->file('avatar');
+        if ($avatarFile && $avatarFile['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($avatarFile['name'], PATHINFO_EXTENSION));
+            $storage = new \Diffrakt\Services\StorageService();
+            $avatarPath = $storage->storeUploadedFile($avatarFile, 'avatars', $ext);
+            User::updateAvatar($request->userId(), $avatarPath);
         }
 
-        Response::json(['message' => 'Profile updated successfully.']);
+        // Return updated user so frontend can refresh avatar
+        $user = User::findById($request->userId());
+        $avatarUrl = null;
+        if ($user['avatar_path']) {
+            $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
+        }
+
+        Response::json([
+            'message' => 'Profile updated successfully.',
+            'avatar_url' => $avatarUrl,
+            'bio' => $user['bio'],
+        ]);
     }
 
     public function follow(Request $request): void {
