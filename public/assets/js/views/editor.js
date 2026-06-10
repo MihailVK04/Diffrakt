@@ -137,7 +137,8 @@ export class EditorView {
             this._imageEl = await this._loadImage(this._post.thumb_url);
  
             if (this._post.pipeline_id) {
-                this._pipeline = await api.pipelines.get(this._post.pipeline_id);
+                const pipelineResponse = await api.pipelines.get(this._post.pipeline_id);
+                this._pipeline = pipelineResponse.pipeline ?? pipelineResponse;
                 this._steps = this._pipeline.steps ?? [];
             } else {
                 this._pipeline = await api.pipelines.create(`Post ${postId} pipeline`);
@@ -568,7 +569,6 @@ export class EditorView {
                 >${this._esc(f.name)}</button>
             `).join('');
 
-            // Remove old listener if re-rendering (called after save)
             if (this._boundUserFilterClick) {
                 section.removeEventListener('click', this._boundUserFilterClick);
             }
@@ -591,8 +591,8 @@ export class EditorView {
 
         const pipelineId = parseInt(btn.dataset.pipelineId, 10);
         try {
-            const pipeline = await api.pipelines.get(pipelineId);
-            const steps = pipeline.steps ?? [];
+            const data = await api.pipelines.get(pipelineId);
+            const steps = data.pipeline?.steps ?? data.steps ?? [];
             for (const step of steps) {
                 this._steps.push({
                     filter_id: step.filter_id,
