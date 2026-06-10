@@ -65,7 +65,12 @@ class UserController {
         $limit = $request->input('limit') ? (int)$request->input('limit') : 10;
 
         $posts = Post::getUserPosts((int)$user['id'], $cursor, $limit);
-        
+
+        foreach ($posts as &$post) {
+            $post['thumb_url'] = 'api/v1/files?path=' . urlencode($post['thumb_path']);
+        }
+        unset($post);
+
         $nextCursor = null;
         if (count($posts) === $limit) {
             $nextCursor = (int)end($posts)['id'];
