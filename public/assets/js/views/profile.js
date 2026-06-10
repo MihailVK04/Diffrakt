@@ -332,6 +332,7 @@ export class ProfileView {
  
     _buildProfileHTML(profile, isOwnProfile, isAuthenticated) {
         const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+        console.log('BASE in feed:', BASE);
         const avatarSrc = profile.avatar_url
             ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${BASE}/${profile.avatar_url.replace(/^\//, '')}`)
             : null;
