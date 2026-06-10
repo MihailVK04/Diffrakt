@@ -448,7 +448,7 @@ export class ProfileView {
     _buildPostItemHTML(post) {
         const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
         const url = `/editor/${encodeURIComponent(post.id)}`;
-        const thumbUrl = post.thumb_url.startsWith('http') ? post.thumb_url : `${BASE}/${post.thumb_url.replace(/^\//, '')}`;
+        const thumbUrl = (post.thumb_url ?? '').startsWith('http') ? post.thumb_url : `${BASE}/${(post.thumb_url ?? '').replace(/^\//, '')}`;
         const alt = post.caption ? this._esc(post.caption) : `Post by ${this._esc(this._username)}`;
 
         return `
