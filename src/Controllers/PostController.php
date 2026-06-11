@@ -56,6 +56,7 @@ class PostController {
         if ($post['processed_path']) {
             $post['processed_url'] = 'api/v1/files?path=' . urlencode($post['processed_path']);
         }
+        $post['original_url'] = 'api/v1/files?path=' . urlencode($post['original_path']);
         
         Response::json(['post' => $post]);
     }
@@ -107,7 +108,7 @@ class PostController {
 
     public function export(Request $request): void {
         $postId = (int)($request->params['id'] ?? 0);
-        
+
         $data = $request->body() ?? [];
         $pipelineId = isset($data['pipeline_id']) ? (int)$data['pipeline_id'] : 0;
 
@@ -125,17 +126,17 @@ class PostController {
 
         try {
             $storage = new StorageService();
-            $runner = new PipelineRunner($storage);
-            $processedPath = $runner->run($post['original_path'], $pipelineId);
-            
-            Database::getInstance()->execute(
-                'UPDATE posts SET processed_path = ? WHERE id = ?', 
-                [$processedPath, $postId]
-            );
-            
+
+            if (!empty($post['processed_path'])) {
+                $downloadPath = $post['processed_path'];
+            } else {
+                $runner = new PipelineRunner($storage);
+                $downloadPath = $runner->run($post['original_path'], $pipelineId);
+            }
+
             Response::json([
                 'message' => 'Export complete.',
-                'download_url' => 'api/v1/files?path=' . urlencode($processedPath)
+                'download_url' => 'api/v1/files?path=' . urlencode($downloadPath)
             ]);
         } catch (\Exception $e) {
             Response::badRequest('Export failed: ' . $e->getMessage());
@@ -162,7 +163,9 @@ class PostController {
         try {
             $storage = new StorageService();
             $runner = new PipelineRunner($storage);
-            $processedPath = $runner->run($post['original_path'], $pipelineId);
+
+            $sourcePath = !empty($post['processed_path']) ? $post['processed_path'] : $post['original_path'];
+            $processedPath = $runner->run($sourcePath, $pipelineId);
 
             Database::getInstance()->execute(
                 'UPDATE posts SET processed_path = ?, is_published = 1 WHERE id = ?',

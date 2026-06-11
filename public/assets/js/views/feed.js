@@ -164,7 +164,7 @@ export class FeedView {
         const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
 
         const authorUrl = `/profile/${encodeURIComponent(post.author.username)}`;
-        const postUrl   = `/editor/${encodeURIComponent(post.id)}`;
+        const postUrl = `/post/${encodeURIComponent(post.id)}`;
 
         const thumbUrl  = post.thumb_url?.startsWith('http')
             ? post.thumb_url

@@ -134,7 +134,8 @@ export class EditorView {
             const raw = await api.posts.get(postId);
             this._post = raw.post ?? raw;
  
-            this._imageEl = await this._loadImage(this._post.thumb_url);
+            const imageUrl = this._post.processed_url ?? this._post.original_url ?? this._post.thumb_url;
+            this._imageEl = await this._loadImage(imageUrl);
  
             if (this._post.pipeline_id) {
                 const pipelineResponse = await api.pipelines.get(this._post.pipeline_id);
@@ -386,7 +387,7 @@ export class EditorView {
     _bindExport() {
         const handler = async () => {
             if (!this._postId || !this._pipeline) {
-                this._setGlobalError('Save your pipeline before exporting.');
+                this._setGlobalError('Upload an image first.');
                 return;
             }
 
