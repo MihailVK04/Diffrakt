@@ -1391,3 +1391,51 @@ input, textarea, select {
         font-size: var(--text-xs);
     }
 }
+
+.post-view {
+    max-width: var(--max-width-narrow);
+    margin-inline: auto;
+    padding: var(--space-6) var(--space-4) var(--space-16);
+}
+
+.post-view__back {
+    margin-bottom: var(--space-5);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    padding: var(--space-2) var(--space-3);
+}
+
+.post-view__back:hover {
+    color: var(--color-text);
+}
+
+.post-view__figure {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
+    margin: 0;
+}
+
+.post-view__image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.post-view__caption {
+    padding: var(--space-4);
+    font-size: var(--text-base);
+    color: var(--color-text);
+    line-height: 1.5;
+    border-top: 1px solid var(--color-border);
+}
+
+.post-view__error {
+    color: var(--color-error);
+    background-color: var(--color-error-bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    font-size: var(--text-sm);
+}
