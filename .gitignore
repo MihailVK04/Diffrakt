@@ -1,1 +1,13 @@
 .env
+ 
+# User-uploaded files — persisted via Docker named volume, not git
+storage/originals/*
+storage/thumbs/*
+storage/processed/*
+storage/avatars/*
+ 
+# Keep the directory structure in git
+!storage/originals/.gitkeep
+!storage/thumbs/.gitkeep
+!storage/processed/.gitkeep
+!storage/avatars/.gitkeep
