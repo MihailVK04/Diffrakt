@@ -129,11 +129,6 @@ class PostController {
             $runner = new PipelineRunner($storage);
             $processedPath = $runner->run($post['original_path'], $pipelineId);
             
-            Database::getInstance()->execute(
-                'UPDATE posts SET processed_path = ? WHERE id = ?', 
-                [$processedPath, $postId]
-            );
-            
             Response::json([
                 'message' => 'Export complete.',
                 'download_url' => 'api/v1/files?path=' . urlencode($processedPath)
