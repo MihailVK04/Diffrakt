@@ -30,6 +30,7 @@ import { FeedView } from './views/feed.js';
 import { EditorView } from './views/editor.js';
 import { ProfileView } from './views/profile.js';
 import { HomeView } from './views/home.js';
+import { PostView } from './views/post.js';
 
 const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
 
@@ -39,6 +40,7 @@ const ROUTES = [
     { pattern: '/editor', view: EditorView, auth: true},
     { pattern: '/editor/:postId', view: EditorView, auth: true},
     { pattern: '/profile/:username', view: ProfileView, auth: false},
+    { pattern: '/post/:postId', view: PostView, auth: false},
 ];
 
 let _currentView = null;
