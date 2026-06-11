@@ -498,7 +498,7 @@ export class EditorView {
                     <button id="editor-save-btn" class="btn btn--primary" type="button">Publish</button>
                     <button id="editor-export-btn"      class="btn btn--secondary" type="button">Export</button>
                     <button id="editor-save-filter-btn" class="btn btn--ghost"     type="button">Save as filter</button>
-                <div class="editor__preview-actions-row">
+                </div>
 
                 <div id="editor-save-filter-form" class="editor__save-filter-form" hidden>
                     <input id="editor-save-filter-input" class="form__input" type="text" placeholder="Filter name" maxlength="80">
