@@ -101,6 +101,8 @@ class Router {
                 ARRAY_FILTER_USE_KEY
             );
 
+            $params = array_map('urldecode', $params);
+
             $this->request->setParams($params);
 
             $this->sendCors();
