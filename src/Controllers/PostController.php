@@ -108,7 +108,7 @@ class PostController {
 
     public function export(Request $request): void {
         $postId = (int)($request->params['id'] ?? 0);
-        
+
         $data = $request->body() ?? [];
         $pipelineId = isset($data['pipeline_id']) ? (int)$data['pipeline_id'] : 0;
 
@@ -126,12 +126,17 @@ class PostController {
 
         try {
             $storage = new StorageService();
-            $runner = new PipelineRunner($storage);
-            $processedPath = $runner->run($post['original_path'], $pipelineId);
-            
+
+            if (!empty($post['processed_path'])) {
+                $downloadPath = $post['processed_path'];
+            } else {
+                $runner = new PipelineRunner($storage);
+                $downloadPath = $runner->run($post['original_path'], $pipelineId);
+            }
+
             Response::json([
                 'message' => 'Export complete.',
-                'download_url' => 'api/v1/files?path=' . urlencode($processedPath)
+                'download_url' => 'api/v1/files?path=' . urlencode($downloadPath)
             ]);
         } catch (\Exception $e) {
             Response::badRequest('Export failed: ' . $e->getMessage());
