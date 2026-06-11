@@ -163,7 +163,9 @@ class PostController {
         try {
             $storage = new StorageService();
             $runner = new PipelineRunner($storage);
-            $processedPath = $runner->run($post['original_path'], $pipelineId);
+
+            $sourcePath = !empty($post['processed_path']) ? $post['processed_path'] : $post['original_path'];
+            $processedPath = $runner->run($sourcePath, $pipelineId);
 
             Database::getInstance()->execute(
                 'UPDATE posts SET processed_path = ?, is_published = 1 WHERE id = ?',
