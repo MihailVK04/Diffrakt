@@ -849,7 +849,7 @@ input, textarea, select {
 
  
 .editor__save-filter-form {
-    display: none;
+    display: flex;  /* not none */
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
@@ -857,6 +857,10 @@ input, textarea, select {
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-md);
     flex-wrap: wrap;
+}
+
+.editor__save-filter-form[hidden] {
+    display: none;
 }
  
 .editor__save-filter-form .form__input {
