@@ -395,6 +395,14 @@ export class EditorView {
             this._setGlobalError('');
 
             try {
+                const steps = this._steps.map((step, i) => ({
+                    step_order: i + 1,
+                    filter_id: step.filter_id,
+                    sub_pipeline_id: null,
+                    params: step.params ?? {},
+                }));
+
+                await api.pipelines.replaceSteps(this._pipeline.id, steps);
                 const result = await api.posts.export(this._postId, this._pipeline.id);
 
                 const a = document.createElement('a');
