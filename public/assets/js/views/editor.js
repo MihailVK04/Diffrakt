@@ -134,7 +134,8 @@ export class EditorView {
             const raw = await api.posts.get(postId);
             this._post = raw.post ?? raw;
  
-            this._imageEl = await this._loadImage(this._post.thumb_url);
+            const imageUrl = this._post.processed_url ?? this._post.original_url ?? this._post.thumb_url;
+            this._imageEl = await this._loadImage(imageUrl);
  
             if (this._post.pipeline_id) {
                 const pipelineResponse = await api.pipelines.get(this._post.pipeline_id);

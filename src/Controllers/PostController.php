@@ -56,6 +56,7 @@ class PostController {
         if ($post['processed_path']) {
             $post['processed_url'] = 'api/v1/files?path=' . urlencode($post['processed_path']);
         }
+        $post['original_url'] = 'api/v1/files?path=' . urlencode($post['original_path']);
         
         Response::json(['post' => $post]);
     }
