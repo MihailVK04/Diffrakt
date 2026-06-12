@@ -86,17 +86,17 @@ class ChatController {
  
         $conversation = $this->resolveConversation($conversationId, $userId);
  
-        $afterId = $request->input('after') !== null
-            ? (int) $request->input('after')
+        $afterId = $request->query('after') !== null
+            ? (int) $request->query('after')
             : null;
- 
+
         if ($afterId !== null) {
             $messages = Message::getAfter($conversationId, $afterId);
             Response::json(['messages' => $this->formatMessages($messages)]);
             return;
         }
- 
-        $cursor   = $request->input('cursor') ? (int) $request->input('cursor') : null;
+
+        $cursor   = $request->query('cursor') !== null ? (int) $request->query('cursor') : null;
         $messages = Message::getPage($conversationId, $cursor, self::PAGE_LIMIT);
  
         $nextCursor = null;
