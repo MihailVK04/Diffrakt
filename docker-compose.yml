@@ -20,8 +20,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./database/migrations/001_followee_id.sql:/docker-entrypoint-initdb.d/02-001_followee_id.sql
-      - ./database/seeds/filters.sql:/docker-entrypoint-initdb.d/03-seeds.sql
+      - ./database/seeds/filters.sql:/docker-entrypoint-initdb.d/02-seeds.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
       interval: 5s
