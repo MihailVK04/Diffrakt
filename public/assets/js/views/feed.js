@@ -1,34 +1,3 @@
-/**
- * public/assets/js/views/feed.js — FeedView
- *
- * Displays posts from followed users in reverse-chronological order.
- * Implements cursor-based pagination — the last post ID seen is passed as
- * ?cursor= on the next request. A sentinel "Load more" button triggers the
- * next page; the button is hidden once the server signals no more pages.
- *
- * View contract (expected by app.js):
- *   constructor(container, params)
- *   async render()
- *   destroy()          ← cancels in-flight requests, removes listeners
- *
- * API used:
- *   api.feed.get(cursor)   GET /api/v1/feed[?cursor={id}]
- *
- * Expected API response shape:
- *   {
- *     posts: [
- *       {
- *         id, caption, visibility,
- *         thumb_url,                  // served via PHP readfile()
- *         created_at,
- *         author: { username, avatar_url }
- *       },
- *       …
- *     ],
- *     next_cursor: <int|null>        // null means no more pages
- *   }
- */
-
 import api from '../api.js';
 
 export class FeedView {

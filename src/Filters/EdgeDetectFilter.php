@@ -11,7 +11,6 @@ class EdgeDetectFilter implements FilterInterface {
         $sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
         $sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
 
-        // Read all pixels into a flat array first (same as JS tmp buffer)
         $pixels = [];
         for ($y = 0; $y < $height; $y++) {
             for ($x = 0; $x < $width; $x++) {
