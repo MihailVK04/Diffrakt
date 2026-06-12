@@ -1,23 +1,5 @@
 <?php
 
-/**
- * src/Core/Request.php
- *
- * Wraps the current HTTP request into a clean object so controllers never
- * touch superglobals directly.
- *
- * Provides:
- *   - method()   — HTTP verb, uppercased
- *   - uri()      — path only, query string stripped
- *   - query()    — $_GET values, optionally by key
- *   - body()     — decoded JSON body or $_POST for multipart requests
- *   - file()     — uploaded file from $_FILES by key
- *   - header()   — a single request header by name
- *   - ip()       — best-guess client IP
- *   - params     — named URI segments set by the Router after matching
- *   - userId()   — convenience wrapper around $_SESSION['user_id']
- */
-
 declare(strict_types=1);
 
 namespace Diffrakt\Core;

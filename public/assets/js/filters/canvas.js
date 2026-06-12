@@ -1,28 +1,3 @@
-/**
- * public/assets/js/filters/canvas.js — Atomic filter implementations
- *
- * Each function takes an ImageData object and a params object, applies the
- * filter in-place, and returns the mutated ImageData. No function creates a
- * new ImageData — they all operate on the pixel buffer directly.
- *
- * Filter IDs match the database rows in pipeline_steps.filter_id:
- *
- *   1  — gaussianBlur   { intensity: 1–50 }
- *   2  — grayscale      {}
- *   3  — sepia          {}
- *   4  — brightness     { level: -255–255 }
- *   5  — contrast       { level: -255–255 }
- *   6  — saturation     { level: -100–0 }
- *   7  — hueRotate      { angle: 0–360 }
- *   8  — vignette       {}
- *   9  — digitalNoise   { intensity: 1–100 }
- *   10 — edgeDetect     {}
- *
- * All pixel loops use a flat Uint8ClampedArray where each pixel occupies
- * four consecutive bytes: [R, G, B, A]. Alpha is always preserved unchanged
- * unless the filter explicitly needs to modify it.
- */
-
 export function gaussianBlur(imageData, params = {}) {
     const radius = Math.max(1, Math.min(50, params.intensity ?? 5));
     const passes = 3;

@@ -1,26 +1,3 @@
-/**
- * public/assets/js/filters/pipeline.js — Client-side pipeline runner
- *
- * Takes an HTMLImageElement (or a canvas) and an ordered array of pipeline
- * steps, runs each filter in sequence using canvas.js implementations, and
- * returns the result as a base64 data URL suitable for live preview or
- * export submission.
- *
- * Usage:
- *   import { runPipeline } from './pipeline.js';
- *
- *   const dataUrl = await runPipeline(imgElement, steps);
- *   previewEl.src = dataUrl;
- *
- * Step shape (matches pipeline_steps DB rows / API response):
- *   {
- *     filter_id: number,          // 1–10, maps to FILTER_MAP in canvas.js
- *     params: object,             // {} for parameterless filters
- *     sub_pipeline_id: null       // sub-pipelines are resolved server-side;
- *                                 // the client runner skips them with a warning
- *   }
- */
-
 import { FILTER_MAP } from "./canvas.js";
 
 export function runPipeline(source, steps) {

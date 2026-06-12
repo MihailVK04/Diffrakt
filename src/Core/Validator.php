@@ -4,35 +4,6 @@ declare(strict_types=1);
 
 namespace Diffrakt\Core;
 
-/**
- * Validator
- *
- * Rules-based field validator. Pass a rules array and a data array;
- * get back a per-field errors array. Empty errors array means valid.
- *
- * Supported rules:
- *   required                — field must be present and non-empty string
- *   email                   — must pass filter_var FILTER_VALIDATE_EMAIL
- *   min_length: int         — string length must be >= value
- *   max_length: int         — string length must be <= value
- *   integer                 — must be a whole number (int or numeric string)
- *   min: int|float          — numeric value must be >= value
- *   max: int|float          — numeric value must be <= value
- *
- * Usage:
- *
- *   $errors = Validator::validate($_data, [
- *       'username' => ['required', 'min_length:3', 'max_length:32'],
- *       'email'    => ['required', 'email'],
- *       'password' => ['required', 'min_length:8'],
- *       'age'      => ['integer', 'min:18', 'max:120'],
- *   ]);
- *
- *   if (!empty($errors)) {
- *       Response::unprocessable($errors);
- *   }
- */
-
 class Validator {
 
     public static function validate(array $data, array $rules): array {

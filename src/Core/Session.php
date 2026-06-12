@@ -7,25 +7,6 @@ namespace Diffrakt\Core;
 use PDO;
 use SessionHandlerInterface;
 
-/**
- * Session
- *
- * Configures and starts a DB-backed PHP session.
- *
- * Responsibilities:
- *  - Set all session ini directives before session_start().
- *  - Register itself as the SessionHandlerInterface so PHP reads/writes
- *    the `sessions` MySQL table instead of the filesystem.
- *  - Expose a single static entry point: Session::start().
- *
- * The `sessions` table schema:
- *   id          VARCHAR(128)  PRIMARY KEY   — PHP session ID
- *   user_id     INT           NULL          — FK → users.id (NULL before login)
- *   data        TEXT          NOT NULL      — serialised $_SESSION payload
- *   expires_at  DATETIME      NOT NULL      — NOW() + SESSION_LIFETIME seconds
- *   created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
- */
-
 class Session implements SessionHandlerInterface {
 
     private PDO $pdo;
@@ -57,12 +38,10 @@ class Session implements SessionHandlerInterface {
         session_start();
     }
 
-    /** No-op: PDO connection is already open via Database singleton. */
     public function open(string $path, string $name): bool {
         return true;
     }
 
-    /** No-op: PDO connection is already open via Database singleton. */
     public function close(): bool {
         return true;
     }
@@ -106,13 +85,6 @@ class Session implements SessionHandlerInterface {
         return $stmt->rowCount();
     }
 
-    /**
-     * Retrieve the PDO instance from the Database singleton.
-     *
-     * TODO: update this one line to match however Database.php exposes PDO —
-     * e.g. Database::getInstance()->getPdo() or just Database::getInstance()
-     * if that returns PDO directly.
-     */
     private static function resolvePdo(): PDO
     {
         return Database::getInstance()->getPdo();

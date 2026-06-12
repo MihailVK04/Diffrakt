@@ -1,20 +1,3 @@
-/**
- * public/assets/js/components/nav.js — Nav
- *
- * Persistent top navigation bar. Rendered outside the #app container so it
- * survives route transitions without being re-created on every render.
- *
- * Authenticated links: Feed | Editor | Profile | Log out
- * Unauthenticated:     hidden entirely (home page has its own auth UI)
- *
- * Usage (called from app.js after auth state is known):
- *   import { Nav } from './components/nav.js';
- *
- *   const nav = new Nav(document.getElementById('nav'));
- *   nav.render(currentUser);   // pass null when logged out
- *   nav.destroy();             // call before re-rendering
- */
- 
 import api from '../api.js';
  
 export class Nav {
@@ -23,11 +6,7 @@ export class Nav {
         this._container = container;
         this._listeners = [];
     }
- 
-    /**
-     * @param {object|null} user  — the current user object, or null if logged out.
-     *                              Shape: { id, username, email }
-     */
+
     render(user) {
         if (!user) {
             this._container.innerHTML = '';
@@ -97,7 +76,6 @@ export class Nav {
             try {
                 await api.auth.logout();
             } catch {
-                // session may already be gone — proceed regardless
             } finally {
                 btn.disabled = false;
             }
@@ -147,7 +125,6 @@ export class Nav {
             window.app.navigate(`/profile/${encodeURIComponent(username)}`);
         };
 
-        // Debounced input handler
         const onInput = () => {
             clearTimeout(debounceTimer);
             const q = input.value.trim();
@@ -163,7 +140,6 @@ export class Nav {
             }, 300);
         };
 
-        // Keyboard navigation
         const onKeydown = (e) => {
             const items = [...dropdown.querySelectorAll('.nav__search-item')];
             if (!items.length) return;
@@ -186,13 +162,11 @@ export class Nav {
             items.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
         };
 
-        // Click on a result
         const onDropdownClick = (e) => {
             const item = e.target.closest('.nav__search-item');
             if (item) navigateToUser(item.dataset.username);
         };
 
-        // Close on outside click
         const onDocumentClick = (e) => {
             if (!this._container.contains(e.target)) closeDropdown();
         };

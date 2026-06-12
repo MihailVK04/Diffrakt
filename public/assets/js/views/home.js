@@ -1,19 +1,3 @@
-/**
- * public/assets/js/views/home.js — HomeView
- *
- * The landing page. The only view that handles both authenticated and
- * unauthenticated states:
- *
- *   - Authenticated  → immediately redirect to /feed. Handles the case where
- *                      a logged-in user navigates to / directly.
- *   - Unauthenticated → render the landing page with login and register forms.
- *
- * View contract (expected by app.js):
- *   constructor(container, params)
- *   async render()
- *   destroy()          ← cleans up all event listeners
- */
-
 import api from '../api.js';
 
 export class HomeView {
