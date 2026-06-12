@@ -25,6 +25,7 @@ CREATE TABLE posts (
     thumb_path VARCHAR(255) NOT NULL,
     processed_path VARCHAR(255) NULL DEFAULT NULL,
     caption TEXT NULL,
+    is_published BOOLEAN NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -82,4 +83,26 @@ CREATE TABLE rate_limits (
     requests INT UNSIGNED NOT NULL DEFAULT 1,
     window_start DATETIME NOT NULL,
     PRIMARY KEY (ip_hash, endpoint)
+);
+
+CREATE TABLE conversations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_a_id INT NOT NULL,
+    user_b_id INT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_conversation_pair (user_a_id, user_b_id),
+    FOREIGN KEY (user_a_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_b_id) REFERENCES users(id) ON DELETE CASCADE,
+    CHECK (user_a_id < user_b_id)
+);
+ 
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    body TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_messages_conversation_id (conversation_id),
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
