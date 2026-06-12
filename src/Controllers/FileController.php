@@ -15,10 +15,8 @@ class FileController {
             Response::notFound('No path specified.');
         }
 
-        // Normalise to forward slashes, strip leading slash
         $path = ltrim(str_replace('\\', '/', $path), '/');
 
-        // Only allow access inside known storage subdirectories
         $allowed = ['originals', 'thumbs', 'processed', 'avatars'];
         $parts = explode('/', $path, 2);
 

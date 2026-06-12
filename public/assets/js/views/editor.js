@@ -1,41 +1,3 @@
-/**
- * public/assets/js/views/editor.js — EditorView
- *
- * The photo editor. Handles two routes:
- *
- *   /editor          — fresh editor, no post loaded. User uploads a new image.
- *   /editor/:postId  — loads an existing post and its pipeline for editing.
- *
- * Responsibilities:
- *   - Image upload (new post) or load existing post thumbnail.
- *   - Load the available filters list via GET /filters.
- *   - Build and manage a pipeline (ordered list of steps).
- *   - Live preview — runs the pipeline client-side via pipeline.js on every
- *     change. Debounced so rapid slider moves don't flood the canvas.
- *   - Save pipeline via PUT /pipelines/{id}/steps.
- *   - Export via POST /posts/{id}/export — server-side GD render.
- *   - Save current pipeline as a named composite filter via POST /filters.
- *
- * View contract (expected by app.js):
- *   constructor(container, params)   — params.postId (string|undefined)
- *   async render()
- *   destroy()
- *
- * API used:
- *   api.filters.list()                          GET  /filters
- *   api.posts.upload(file, caption, visibility) POST /posts
- *   api.posts.get(id)                           GET  /posts/{id}
- *   api.posts.export(postId, pipelineId)        POST /posts/{id}/export
- *   api.pipelines.create(name)                  POST /pipelines
- *   api.pipelines.get(id)                       GET  /pipelines/{id}
- *   api.pipelines.replaceSteps(id, steps)       PUT  /pipelines/{id}/steps
- *   api.filters.create(name, pipelineId)        POST /filters
- *
- * Filter ID → name mapping mirrors canvas.js / the DB filters table:
- *   1 Gaussian Blur  2 Grayscale  3 Sepia      4 Brightness  5 Contrast
- *   6 Saturation     7 Hue Rotate 8 Vignette   9 Digital Noise  10 Edge Detect
- */
- 
 import api from '../api.js';
 import { runPipeline } from '../filters/pipeline.js';
  
@@ -581,7 +543,6 @@ export class EditorView {
             this._listeners.push({ el: section, type: 'click', fn: this._boundUserFilterClick });
 
         } catch {
-            // non-critical
         }
     }
 
