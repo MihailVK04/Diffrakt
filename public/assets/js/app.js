@@ -1,29 +1,3 @@
-/**
- * app.js — Diffrakt SPA entry point
- *
- * Responsibilities:
- *  1. Define the client-side route table
- *  2. Handle popstate and in-app link navigation
- *  3. Resolve the current route, guard protected routes,
- *     instantiate the matching view class and call render()
- *  4. Expose a navigate(path) helper for views to trigger transitions
- *
- * View contract:
- *  Every view must be a class that accepts (container, params) in its
- *  constructor and exposes a render() method.
- *
- *  class SomeView {
- *      constructor(container, params) { ... }
- *      render() { ... }           // sync or async — app.js awaits it
- *      destroy() { ... }          // optional — called before next render
- *  }
- *
- * Route params:
- *  Dynamic segments are declared as :param in the path pattern and
- *  passed to the view constructor as a plain object, e.g.
- *  /posts/:id  →  params = { id: '42' }
- */
-
 import api from './api.js';
 import { Nav } from './components/nav.js';
 import { FeedView } from './views/feed.js';

@@ -1,18 +1,4 @@
 <?php
- 
-/**
- * src/Core/Response.php
- *
- * Static helper for sending HTTP responses.
- *
- * Every method ends with exit — nothing runs after a response is sent.
- * Controllers call exactly one of these at the end of their action method.
- *
- * Usage:
- *   Response::json(['user' => $user], 201);
- *   Response::json(['error' => 'Not found'], 404);
- *   Response::file('/var/www/diffrakt/storage/processed/abc.jpg', 'export.jpg');
- */
 
 declare(strict_types=1);
 

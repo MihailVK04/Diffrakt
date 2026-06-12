@@ -1,42 +1,3 @@
-/**
- * public/assets/js/views/profile.js — ProfileView
- *
- * Public user profile page. Accessible without authentication.
- *
- * Responsibilities:
- *   - Fetch and display the user's profile (avatar, username, bio,
- *     follower/following counts, post grid).
- *   - If the viewer is authenticated and looking at someone else's profile,
- *     show a Follow / Unfollow button.
- *   - If the viewer is looking at their own profile, show an Edit profile
- *     form (bio + avatar upload).
- *
- * View contract (expected by app.js):
- *   constructor(container, params)   — params.username from the route
- *   async render()
- *   destroy()
- *
- * API used:
- *   api.users.getProfile(username)              GET /api/v1/users/{username}
- *   api.users.getPosts(username, cursor)        GET /api/v1/users/{username}/posts[?cursor={id}]
- *   api.users.follow(username)                  POST /api/v1/users/{username}/follow
- *   api.users.unfollow(username)                DELETE /api/v1/users/{username}/follow
- *   api.users.updateMe({ bio, avatar })         PATCH /api/v1/users/me
- *
- * Expected GET /users/{username} response shape:
- *   {
- *     username, bio, avatar_url,
- *     follower_count, following_count, post_count,
- *     is_following      // bool — whether the current viewer follows this user
- *   }
- *
- * Expected GET /users/{username}/posts response shape:
- *   {
- *     posts: [ { id, thumb_url, caption } ],
- *     next_cursor: <int|null>
- *   }
- */
-
 import api from '../api.js';
 
 export class ProfileView {
@@ -253,7 +214,6 @@ export class ProfileView {
             const file = avatarInput.files[0];
             if (!file) return;
             avatarPreview.src = URL.createObjectURL(file);
-            // Ensure it renders as an img if it was a placeholder span
             if (avatarPreview.tagName !== 'IMG') {
                 const img = document.createElement('img');
                 img.className = avatarPreview.className;
@@ -279,14 +239,12 @@ export class ProfileView {
             try {
                 const result = await api.users.updateMe({ bio, avatar });
 
-                // Update bio in DOM
                 const bioEl = this._container.querySelector('[id="profile-bio"]');
                 if (bioEl) {
                     bioEl.textContent = bio;
                     bioEl.classList.toggle('profile__bio--empty', !bio.trim());
                 }
 
-                // Update avatar in DOM using the URL returned by the server
                 if (result.avatar_url) {
                     const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
                     const fullUrl = `${BASE}/${result.avatar_url.replace(/^\//, '')}`;
@@ -295,7 +253,6 @@ export class ProfileView {
                         if (preview.tagName === 'IMG') {
                             preview.src = fullUrl;
                         } else {
-                            // Was a placeholder span — replace with img
                             const img = document.createElement('img');
                             img.className = 'profile__avatar';
                             img.id = 'profile-avatar-preview';

@@ -1,12 +1,3 @@
--- ============================================================
--- Diffrakt — seeds/filters.sql
--- Seeds всичките 10 вградени атомарни филтъра.
---
--- ВАЖНО: ID-тата трябва да съвпадат точно с filterMap в PipelineRunner.php:
---   1=Blur  2=Grayscale  3=Sepia  4=Brightness   5=Contrast
---   6=Saturation  7=HueRotate  8=Vignette  9=Noise  10=EdgeDetect
--- ============================================================
-
 INSERT INTO filters (id, name, type, owner_id, is_public, params_schema) VALUES
 (1,  'Blur',       'atomic', NULL, 1, '{"intensity": {"type": "int",   "min": 1,    "max": 50,  "default": 1}}'),
 (2,  'Grayscale',  'atomic', NULL, 1, NULL),

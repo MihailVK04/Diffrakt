@@ -1,19 +1,18 @@
  
  
 :root {
-    /* --- Palette --- */
-    --color-bg:              #F5EFE6;   /* warm linen — bright but not white */
-    --color-surface:         #FFFBF5;   /* creamy card surface */
-    --color-surface-hover:   #FFF5E8;   /* card hover tint */
-    --color-accent:          #D94179;   /* pink CTA — unchanged */
+    --color-bg:              #F5EFE6;
+    --color-surface:         #FFFBF5;
+    --color-surface-hover:   #FFF5E8;
+    --color-accent:          #D94179;
     --color-accent-hover:    #B8305F;
-    --color-navy:            #141259;   /* nav, sidebar, headings — unchanged */
+    --color-navy:            #141259;
     --color-navy-hover:      #0E0B40;
-    --color-deep:            #010626;   /* canvas bg — unchanged */
+    --color-deep:            #010626;
  
-    --color-text:            #1A1510;   /* warm near-black */
-    --color-text-muted:      #6B5F52;   /* warm medium gray */
-    --color-text-on-dark:    #F5EFE6;   /* linen on navy (slightly warmer than pure yellow) */
+    --color-text:            #1A1510;
+    --color-text-muted:      #6B5F52;
+    --color-text-on-dark:    #F5EFE6;
     --color-text-on-accent:  #ffffff;
  
     --color-border:          rgba(26, 21, 16, 0.12);
@@ -24,12 +23,10 @@
     --color-success:         #1A7A4A;
     --color-focus:           #D94179;
  
-    /* --- Typography --- */
     --font-display: Georgia, "Times New Roman", serif;
     --font-body:    system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-mono:    "Courier New", monospace;
  
-    /* --- Type scale --- */
     --text-xs:   0.75rem;
     --text-sm:   0.875rem;
     --text-base: 1rem;
@@ -39,7 +36,6 @@
     --text-2xl:  2.25rem;
     --text-4xl:  3rem;
  
-    /* --- Spacing --- */
     --space-1:  0.25rem;
     --space-2:  0.5rem;
     --space-3:  0.75rem;
@@ -51,28 +47,24 @@
     --space-12: 3rem;
     --space-16: 4rem;
  
-    /* --- Shape --- */
     --radius-sm:   0.25rem;
     --radius-md:   0.5rem;
     --radius-lg:   0.875rem;
     --radius-xl:   1.375rem;
     --radius-full: 624.9375rem;
  
-    /* --- Shadow (warm-tinted, not cold blue-gray) --- */
     --shadow-sm:   0 1px 3px rgba(26, 21, 16, 0.08);
     --shadow-md:   0 4px 12px rgba(26, 21, 16, 0.12);
     --shadow-lg:   0 8px 24px rgba(26, 21, 16, 0.16);
     --shadow-card: 0 2px 6px rgba(26, 21, 16, 0.07),
                    0 1px 2px rgba(26, 21, 16, 0.05);
  
-    /* --- Transitions --- */
     --transition-fast: 120ms ease;
     --transition-base: 200ms ease;
     --transition-slow: 350ms ease;
  
-    /* --- Layout --- */
     --max-width:        60rem;
-    --max-width-narrow: 42rem;   /* was 30rem — feeds were too narrow */
+    --max-width-narrow: 42rem;
     --nav-height:       3.5rem;
 }
  
@@ -469,7 +461,7 @@ input, textarea, select {
 .feed__list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-5);   /* was space-8 — tighter, less dead air */
+    gap: var(--space-5);
 }
  
 .feed__card {
@@ -837,7 +829,7 @@ input, textarea, select {
  
 .editor__preview-actions {
     display: flex;
-    flex-direction: column;    /* stack: action row on top, form below */
+    flex-direction: column;
     gap: var(--space-3);
 }
  
@@ -849,7 +841,7 @@ input, textarea, select {
 
  
 .editor__save-filter-form {
-    display: flex;  /* not none */
+    display: flex;
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
@@ -865,7 +857,7 @@ input, textarea, select {
  
 .editor__save-filter-form .form__input {
     flex: 1 1 10rem;
-    min-width: 0;             /* prevents flex overflow */
+    min-width: 0;
     font-size: var(--text-sm);
     padding: var(--space-2) var(--space-3);
 }
@@ -1333,7 +1325,6 @@ input, textarea, select {
     border-color: rgba(242, 167, 102, 0.5);
 }
 
-/* hide the native × button in Chrome */
 .nav__search-input::-webkit-search-cancel-button {
     display: none;
 }

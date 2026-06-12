@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Diffrakt\Core;
 
-/**
- * Middleware
- *
- * Enforces authentication and rate-limiting on protected routes.
- * Auth is session-based: $_SESSION['user_id'] must be set and non-empty.
- * Rate-limiting is delegated to RateLimiter, which upserts the rate_limits
- * table and calls Response::json() + exit on breach.
- */
 class Middleware {
 
     private RateLimiter $rateLimiter;
