@@ -94,8 +94,7 @@ export class ChatView {
             }
         });
  
-        this._sendForm.addEventListener('submit', e => {
-            e.preventDefault();
+        this._sendBtn.addEventListener('click', () => {
             this._sendMessage();
         });
  
@@ -177,6 +176,7 @@ export class ChatView {
     }
  
     async _openConversation(id) {
+        if (this._activeId === id) return;
         this._stopPoll();
  
         this._activeId      = id;
@@ -210,7 +210,8 @@ export class ChatView {
  
         this._histLoading = true;
  
-        const prevHeight = this._messageList.scrollHeight;
+        const wrap = this._messageList.closest('.chat__message-wrap');
+        const prevHeight = wrap.scrollHeight;
  
         try {
             const qs   = this._histCursor !== null ? `?cursor=${this._histCursor}` : '';
@@ -236,10 +237,11 @@ export class ChatView {
                 this._histObserver.unobserve(this._topSentinel);
             }
  
+            const wrap = this._messageList.closest('.chat__message-wrap');
             if (prevHeight === 0) {
-                this._messageList.scrollTop = this._messageList.scrollHeight;
+                wrap.scrollTop = wrap.scrollHeight;
             } else {
-                this._messageList.scrollTop = this._messageList.scrollHeight - prevHeight;
+                wrap.scrollTop = wrap.scrollHeight - prevHeight;
             }
  
         } catch (err) {
@@ -262,6 +264,7 @@ export class ChatView {
     }
  
     _startPoll() {
+        this._stopPoll();
         this._pollTimer = setInterval(() => this._poll(), POLL_INTERVAL_MS);
     }
  
@@ -299,7 +302,7 @@ export class ChatView {
             this._threadEmpty.hidden = true;
  
             if (wasAtBottom) {
-                this._messageList.scrollTop = this._messageList.scrollHeight;
+                this._messageList.closest('.chat__message-wrap').scrollTop = this._messageList.closest('.chat__message-wrap').scrollHeight;
             }
 
             this._loadConversations();
@@ -326,7 +329,7 @@ export class ChatView {
             const currentUser = window.app.getCurrentUser();
             const el = this._buildMessageEl(msg, currentUser);
             this._messageList.appendChild(el);
-            this._messageList.scrollTop = this._messageList.scrollHeight;
+            this._messageList.closest('.chat__message-wrap').scrollTop = this._messageList.closest('.chat__message-wrap').scrollHeight;
  
             this._messages.push(msg);
             this._lastMessageId = msg.id;
@@ -515,7 +518,7 @@ export class ChatView {
     }
 
     _isScrolledToBottom() {
-        const el = this._messageList;
+        const el = this._messageList.closest('.chat__message-wrap');
         return el.scrollHeight - el.scrollTop - el.clientHeight < 40;
     }
  
