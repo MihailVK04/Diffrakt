@@ -193,6 +193,25 @@ const feed = {
     },
 };
 
+const chat = {
+
+    listConversations() {
+        return get('/chat/conversations');
+    },
+
+    createConversation(username) {
+        return post('/chat/conversations', { username });
+    },
+
+    getMessages(id, qs = '') {
+        return get(`/chat/conversations/${id}/messages${qs}`);
+    },
+    
+    sendMessage(id, body) {
+        return post(`/chat/conversations/${id}/messages`, { body });
+    },
+};
+
 const api = {
     auth,
     users,

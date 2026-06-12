@@ -15,6 +15,7 @@ use Diffrakt\Controllers\PipelineController;
 use Diffrakt\Controllers\PostController;
 use Diffrakt\Controllers\UserController;
 use Diffrakt\Controllers\FileController;
+use Diffrakt\Controllers\ChatController;
 
 $envFile = ROOT_PATH . '/.env';
 
@@ -87,6 +88,11 @@ $router->add('POST', '/api/v1/pipelines/{id}/preview', [PipelineController::clas
 $router->add('GET', '/api/v1/feed', [FeedController::class, 'index'], true, null);
 
 $router->add('GET', '/api/v1/files', [FileController::class, 'serve'], false, null);
+
+$router->add('GET', '/api/v1/chat/conversations', [ChatController::class, 'listConversations'], true, null);
+$router->add('POST', '/api/v1/chat/conversations', [ChatController::class, 'createConversation'], true, ['endpoint' => 'chat.create_conversation', 'max' => 10, 'window' => 60]);
+$router->add('GET', '/api/v1/chat/conversations/{id}/messages', [ChatController::class, 'getMessages'], true, null);
+$router->add('POST', '/api/v1/chat/conversations/{id}/messages', [ChatController::class, 'sendMessage'], true, ['endpoint' => 'chat.send_message', 'max' => 30, 'window' => 60]);
 
 $router->dispatch();
 ?>

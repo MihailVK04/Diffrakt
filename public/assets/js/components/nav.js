@@ -55,6 +55,9 @@ export class Nav {
             <a class="nav__link" href="/editor" data-link>Editor</a>
         </li>
         <li>
+            <a class="nav__link" href="/chat" data-link>Chats</a>
+        </li>
+        <li>
             <a class="nav__link" href="${this._esc(profileHref)}" data-link>
                 ${this._esc(user.username)}
             </a>

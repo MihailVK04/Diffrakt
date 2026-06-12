@@ -5,6 +5,7 @@ import { EditorView } from './views/editor.js';
 import { ProfileView } from './views/profile.js';
 import { HomeView } from './views/home.js';
 import { PostView } from './views/post.js';
+import { ChatView } from './views/chat.js';
 
 const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
 
@@ -15,6 +16,8 @@ const ROUTES = [
     { pattern: '/editor/:postId', view: EditorView, auth: true},
     { pattern: '/profile/:username', view: ProfileView, auth: false},
     { pattern: '/post/:postId', view: PostView, auth: false},
+    { pattern: '/chat', view: ChatView, auth: true },
+    { pattern: '/chat/:convId', view: ChatView, auth: true },
 ];
 
 let _currentView = null;
