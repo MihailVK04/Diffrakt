@@ -219,6 +219,7 @@ const api = {
     filters,
     pipelines,
     feed,
+    chat,
     ApiError,
 };
 
