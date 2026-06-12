@@ -1,0 +1,23 @@
+services:
+  app:
+    image: registry.gitlab.com/<your-group>/diffrakt:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    env_file: .env
+    volumes:
+      - storage_data:/var/www/diffrakt/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  storage_data:
+  db_data:
