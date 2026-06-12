@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    env_file: .env
+    volumes:
+      - storage_data:/var/www/diffrakt/storage
+      - ./public:/var/www/diffrakt/public
+      - ./src:/var/www/diffrakt/src
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seeds/filters.sql:/docker-entrypoint-initdb.d/02-seeds.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  storage_data:
+  db_data:
