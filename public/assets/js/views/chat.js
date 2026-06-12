@@ -227,9 +227,9 @@ export class ChatView {
  
             if (msgs.length > 0) {
                 this._prependMessages(msgs);
- 
+
                 if (this._lastMessageId === 0) {
-                    this._lastMessageId = this._messages[this._messages.length - 1]?.id ?? 0;
+                    this._lastMessageId = msgs[msgs.length - 1].id;
                 }
             }
  
