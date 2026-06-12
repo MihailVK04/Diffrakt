@@ -46,7 +46,7 @@ class PostController {
 
     public function get(Request $request): void {
         $id = (int)($request->params['id'] ?? 0);
-        $post = Post::findById($id);
+        $post = Post::findById($id, $request->userId());
         if (!$post) {
             Response::notFound('Post not found.');
         }
@@ -57,6 +57,8 @@ class PostController {
             $post['processed_url'] = 'api/v1/files?path=' . urlencode($post['processed_path']);
         }
         $post['original_url'] = 'api/v1/files?path=' . urlencode($post['original_path']);
+        $post['like_count'] = (int)($post['like_count'] ?? 0);
+        $post['comment_count'] = (int)($post['comment_count'] ?? 0);
         
         Response::json(['post' => $post]);
     }

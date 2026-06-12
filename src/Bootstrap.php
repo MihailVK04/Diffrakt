@@ -15,6 +15,8 @@ use Diffrakt\Controllers\PipelineController;
 use Diffrakt\Controllers\PostController;
 use Diffrakt\Controllers\UserController;
 use Diffrakt\Controllers\FileController;
+use Diffrakt\Controllers\ReactionController;
+use Diffrakt\Controllers\CommentController;
 
 $envFile = ROOT_PATH . '/.env';
 
@@ -87,6 +89,17 @@ $router->add('POST', '/api/v1/pipelines/{id}/preview', [PipelineController::clas
 $router->add('GET', '/api/v1/feed', [FeedController::class, 'index'], true, null);
 
 $router->add('GET', '/api/v1/files', [FileController::class, 'serve'], false, null);
+
+$router->add('POST', '/api/v1/posts/{id}/react', [ReactionController::class, 'reactToPost'], true, ['endpoint' => 'reactions.post', 'max' => 30, 'window' => 60]);
+$router->add('DELETE', '/api/v1/posts/{id}/react', [ReactionController::class, 'removePostReaction'], true, null);
+
+$router->add('GET', '/api/v1/posts/{id}/comments', [CommentController::class, 'listByPost'], false, null);
+$router->add('POST', '/api/v1/posts/{id}/comments', [CommentController::class, 'create'], true, ['endpoint' => 'comments.create', 'max' => 10, 'window' => 60]);
+$router->add('PATCH', '/api/v1/comments/{id}', [CommentController::class, 'update'], true, ['endpoint' => 'comments.update', 'max' => 10, 'window' => 60]);
+$router->add('DELETE', '/api/v1/comments/{id}', [CommentController::class, 'delete'], true, null);
+
+$router->add('POST', '/api/v1/comments/{id}/react', [ReactionController::class, 'reactToComment'], true, ['endpoint' => 'reactions.comment', 'max' => 30, 'window' => 60]);
+$router->add('DELETE', '/api/v1/comments/{id}/react', [ReactionController::class, 'removeCommentReaction'], true, null);
 
 $router->dispatch();
 ?>

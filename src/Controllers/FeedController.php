@@ -30,7 +30,10 @@ class FeedController {
                     'username' => $p['username'] ?? '',
                     'avatar_url' => !empty($p['avatar_path']) ? '/api/v1/files?path=' . urlencode($p['avatar_path']) : null
                 ],
-                'created_at' => $p['created_at']
+                'created_at' => $p['created_at'],
+                'like_count' => (int)($p['like_count'] ?? 0),
+                'comment_count' => (int)($p['comment_count'] ?? 0),
+                'user_reaction' => $p['user_reaction'] ?? null
             ];
         }, $posts);
 

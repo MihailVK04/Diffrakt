@@ -14,9 +14,16 @@ class Post {
         );
     }
 
-    public static function findById(int $id): ?array {
+    public static function findById(int $id, ?int $userId = null): ?array {
         $db = Database::getInstance();
-        $post = $db->fetchOne('SELECT * FROM posts WHERE id = ?', [$id]);
+        $post = $db->fetchOne("
+            SELECT p.*,
+                (SELECT COUNT(*) FROM post_reactions WHERE post_id = p.id AND reaction = 'like') AS like_count,
+                (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+                (SELECT reaction FROM post_reactions WHERE post_id = p.id AND user_id = ?) AS user_reaction
+            FROM posts p
+            WHERE p.id = ?
+        ", [$userId ?? 0, $id]);
         return $post ?: null;
     }
 
@@ -27,7 +34,7 @@ class Post {
 
     public static function getFeed(int $userId, ?int $cursorId = null, int $limit = 10): array {
         $db = Database::getInstance();
-        $params = [$userId];
+        $params = [$userId, $userId];
         $cursorQuery = '';
         
         if ($cursorId !== null) {
@@ -37,7 +44,10 @@ class Post {
         $params[] = $limit;
         
         return $db->fetchAll("
-            SELECT p.*, u.username, u.avatar_path 
+            SELECT p.*, u.username, u.avatar_path,
+                (SELECT COUNT(*) FROM post_reactions WHERE post_id = p.id AND reaction = 'like') AS like_count,
+                (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+                (SELECT reaction FROM post_reactions WHERE post_id = p.id AND user_id = ?) AS user_reaction
             FROM posts p
             JOIN users u ON p.user_id = u.id
             JOIN follows f ON f.followee_id = p.user_id
@@ -59,7 +69,9 @@ class Post {
         $params[] = $limit;
         
         return $db->fetchAll("
-            SELECT id, user_id, original_path, thumb_path, processed_path, caption, created_at
+            SELECT id, user_id, original_path, thumb_path, processed_path, caption, created_at,
+                (SELECT COUNT(*) FROM post_reactions WHERE post_id = posts.id AND reaction = 'like') AS like_count,
+                (SELECT COUNT(*) FROM comments WHERE post_id = posts.id) AS comment_count
             FROM posts
             WHERE user_id = ? $cursorQuery
             ORDER BY id DESC

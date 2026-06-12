@@ -69,6 +69,9 @@ class UserController {
         foreach ($posts as &$post) {
             $displayPath = $post['processed_path'] ?? $post['thumb_path'];
             $post['thumb_url'] = 'api/v1/files?path=' . urlencode($displayPath);
+            
+            $post['like_count'] = (int)($post['like_count'] ?? 0);
+            $post['comment_count'] = (int)($post['comment_count'] ?? 0);
         }
         unset($post);
 
@@ -173,7 +176,7 @@ class UserController {
             'SELECT id, username, avatar_path, bio
             FROM users
             WHERE username LIKE ?
-        ORDER BY username
+            ORDER BY username
             LIMIT 20',
             ['%' . $q . '%']
         );

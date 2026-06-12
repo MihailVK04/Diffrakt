@@ -404,18 +404,42 @@ export class ProfileView {
 
     _buildPostItemHTML(post) {
         const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
-        const url = `/editor/${encodeURIComponent(post.id)}`;
+        const url = `/post/${encodeURIComponent(post.id)}`;
         const thumbUrl = (post.thumb_url ?? '').startsWith('http') ? post.thumb_url : `${BASE}/${(post.thumb_url ?? '').replace(/^\//, '')}`;
         const alt = post.caption ? this._esc(post.caption) : `Post by ${this._esc(this._username)}`;
 
+        const currentUser = window.app.getCurrentUser();
+        const isOwnProfile = currentUser && currentUser.username === this._username;
+
+        const likeIcon = `${BASE}/assets/icons/like_icon.png`;
+        const commentIcon = `${BASE}/assets/icons/comment_icon.png`;
+
+        let overlayHTML = '';
+        if (!isOwnProfile) {
+            overlayHTML = `
+            <div class="profile__post-overlay">
+                <span class="profile__overlay-stat">
+                    <img src="${likeIcon}" alt="Like" style="width: 24px; height: 24px; object-fit: contain; filter: brightness(0) invert(1);"> 
+                    ${post.like_count || 0}
+                </span>
+                <span class="profile__overlay-stat">
+                    <img src="${commentIcon}" alt="Comment" style="width: 24px; height: 24px; object-fit: contain; filter: brightness(0) invert(1);"> 
+                    ${post.comment_count || 0}
+                </span>
+            </div>`;
+        }
+
         return `
     <a class="profile__post-link" href="${this._esc(url)}" data-link>
-        <img
-            class="profile__post-thumb"
-            src="${this._esc(thumbUrl)}"
-            alt="${alt}"
-            loading="lazy"
-        >
+        <div class="profile__post-thumb-wrapper">
+            <img
+                class="profile__post-thumb"
+                src="${this._esc(thumbUrl)}"
+                alt="${alt}"
+                loading="lazy"
+            >
+            ${overlayHTML}
+        </div>
     </a>`;
     }
  

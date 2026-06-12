@@ -1430,3 +1430,101 @@ input, textarea, select {
     padding: var(--space-4);
     font-size: var(--text-sm);
 }
+
+.feed__actions {
+    display: flex;
+    gap: var(--space-5);
+    padding: var(--space-3) var(--space-4) 0;
+}
+
+.feed__action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-md);
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.feed__action-btn:hover {
+    color: var(--color-accent);
+    transform: scale(1.05);
+}
+
+.feed__action-btn.is-active {
+    color: var(--color-accent);
+    font-weight: 700;
+}
+
+.feed__action-count {
+    font-size: var(--text-sm);
+}
+
+.feed__caption {
+    padding: var(--space-2) var(--space-4) var(--space-4);
+    border-top: none;
+}
+
+.profile__post-thumb-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.profile__post-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(1, 6, 38, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-5);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    color: var(--color-text-on-dark);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    pointer-events: none; 
+}
+
+.profile__post-item:hover .profile__post-overlay {
+    opacity: 1;
+}
+
+.profile__overlay-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.action-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    transition: transform var(--transition-fast), filter var(--transition-fast);
+}
+
+.feed__action-btn.is-active .action-icon {
+    filter: invert(36%) sepia(85%) saturate(2469%) hue-rotate(315deg) brightness(88%) contrast(98%);
+    transform: scale(1.1);
+}
+
+.btn--comment-reply {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon--comment {
+    width: 20px;
+    height: 20px;
+    filter: grayscale(1);
+    transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn--toggle-reply:hover .action-icon--comment {
+    filter: grayscale(0) saturate(1.5) brightness(1.1);
+    transform: scale(1.1);
+}
