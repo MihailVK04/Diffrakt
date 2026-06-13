@@ -271,7 +271,7 @@ export class PostView {
                 ${commentFormHTML}
                 
                 <ul class="post-view__comments-list" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 0;">
-                    ${commentsListHTML || '<p class="post-view__no-comments" style="color: var(--color-text-muted);">No comments yet. Be the first!</p>'}
+                    ${commentsListHTML} 
                 </ul>
             </section>
         </main>`;
