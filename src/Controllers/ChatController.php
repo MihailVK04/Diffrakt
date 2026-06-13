@@ -28,7 +28,7 @@ class ChatController {
                     'id'         => (int) $c['other_user_id'],
                     'username'   => $c['other_username'],
                     'avatar_url' => $c['other_avatar_path']
-                        ? 'api/v1/files?path=' . urlencode($c['other_avatar_path'])
+                        ? (new \Diffrakt\Services\StorageService())->url($c['other_avatar_path'])
                         : null,
                 ],
                 'last_message_body' => $c['last_message_body'],
@@ -166,7 +166,7 @@ class ChatController {
                 'id'         => $otherId,
                 'username'   => $other['username'] ?? null,
                 'avatar_url' => !empty($other['avatar_path'])
-                    ? 'api/v1/files?path=' . urlencode($other['avatar_path'])
+                    ? (new \Diffrakt\Services\StorageService())->url($other['avatar_path'])
                     : null,
             ],
         ];

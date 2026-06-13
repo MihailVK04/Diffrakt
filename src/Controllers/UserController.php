@@ -45,7 +45,8 @@ class UserController {
 
         $avatarUrl = null;
         if ($user['avatar_path']) {
-            $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
+            $storage = new \Diffrakt\Services\StorageService();
+            $avatarUrl = $storage->url($user['avatar_path']);
         }
         $user['avatar_url'] = $avatarUrl;
         unset($user['avatar_path']);
@@ -68,7 +69,7 @@ class UserController {
 
         foreach ($posts as &$post) {
             $displayPath = $post['processed_path'] ?? $post['thumb_path'];
-            $post['thumb_url'] = 'api/v1/files?path=' . urlencode($displayPath);
+            $post['thumb_url'] = (new \Diffrakt\Services\StorageService())->url($displayPath);
         }
         unset($post);
 
@@ -111,7 +112,8 @@ class UserController {
         $user = User::findById($request->userId());
         $avatarUrl = null;
         if ($user['avatar_path']) {
-            $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
+            $storage = new \Diffrakt\Services\StorageService();
+            $avatarUrl = $storage->url($user['avatar_path']);
         }
 
         Response::json([
@@ -177,6 +179,13 @@ class UserController {
             LIMIT 20',
             ['%' . $q . '%']
         );
+
+        $storage = new \Diffrakt\Services\StorageService();
+        foreach ($rows as &$row) {
+            $row['avatar_url'] = $row['avatar_path'] ? $storage->url($row['avatar_path']) : null;
+            unset($row['avatar_path']);
+        }
+        unset($row);
 
         Response::json(['users' => $rows]);
     }
