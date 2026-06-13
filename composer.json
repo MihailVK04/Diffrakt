@@ -1,5 +1,6 @@
 {
     "require": {
-        "aws/aws-sdk-php": "^3.384"
+        "aws/aws-sdk-php": "^3.384",
+        "symfony/filesystem": "7.1"
     }
 }
