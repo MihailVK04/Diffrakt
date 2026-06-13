@@ -20,6 +20,8 @@ date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? getenv('APP_TIMEZONE') ?: 'UT
 
 define('ROOT_PATH', dirname(__DIR__));
 
+require_once ROOT_PATH . '/vendor/autoload.php';
+
 define('SRC_PATH', ROOT_PATH . '/src');
 
 define('STORAGE_PATH', $_ENV['STORAGE_PATH'] ?? getenv('STORAGE_PATH') ?: ROOT_PATH . '/storage');
