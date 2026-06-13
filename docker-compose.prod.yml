@@ -1,12 +1,13 @@
 services:
   app:
-    image: registry.gitlab.com/<your-group>/diffrakt:latest
+    build: .
     restart: unless-stopped
     ports:
       - "80:80"
     env_file: .env
     volumes:
-      - storage_data:/var/www/diffrakt/storage
+      - ./public:/var/www/diffrakt/public
+      - ./src:/var/www/diffrakt/src
     depends_on:
       db:
         condition: service_healthy
@@ -17,7 +18,13 @@ services:
     env_file: .env
     volumes:
       - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seeds/filters.sql:/docker-entrypoint-initdb.d/02-seeds.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  storage_data:
   db_data:
