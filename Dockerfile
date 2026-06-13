@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y nginx supervisor zlib1g-dev libpng-dev 
     && docker-php-ext-install pdo pdo_mysql gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 COPY deploy/nginx.conf /etc/nginx/sites-available/default
 COPY deploy/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
