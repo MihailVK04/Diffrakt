@@ -20,7 +20,7 @@ class Session implements SessionHandlerInterface {
     public static function start(): void {
         $pdo = self::resolvePdo();
         $lifetime = self::resolveLifetime();
-        $isSecure = self::isProduction();
+        $isSecure = false;
 
         ini_set('session.use_strict_mode', '1');
         ini_set('session.cookie_httponly', '1');
