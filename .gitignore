@@ -9,3 +9,5 @@ storage/avatars/*
 !storage/thumbs/.gitkeep
 !storage/processed/.gitkeep
 !storage/avatars/.gitkeep
+
+vendor/
