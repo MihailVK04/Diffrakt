@@ -357,10 +357,16 @@ export class EditorView {
             this._setGlobalError('');
 
             try {
-                const result = await api.posts.export(this._postId, this._pipeline.id);
+                const steps = this._steps.map((step, i) => ({
+                    step_order: i + 1,
+                    filter_id: step.filter_id,
+                    sub_pipeline_id: null,
+                    params: step.params ?? {},
+                }));
+                await api.pipelines.replaceSteps(this._pipeline.id, steps);
 
                 const a = document.createElement('a');
-                a.href = result.download_url;
+                a.href = this._previewCanvas.toDataURL('image/jpeg', 0.92);
                 a.download = `diffrakt-export-${this._postId}.jpg`;
                 a.click();
 
