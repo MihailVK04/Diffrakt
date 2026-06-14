@@ -1,6 +1,7 @@
 FROM php:8.2-fpm
 
-RUN apt-get update && apt-get install -y nginx supervisor zlib1g-dev libpng-dev unzip curl \
+RUN apt-get update && apt-get install -y nginx supervisor zlib1g-dev libpng-dev libwebp-dev libjpeg62-turbo-dev unzip curl \
+    && docker-php-ext-configure gd --with-webp --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
