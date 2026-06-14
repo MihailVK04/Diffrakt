@@ -25,30 +25,20 @@ class ImageService {
         }
 
         $extension = \pathinfo($uploadedFile['name'], PATHINFO_EXTENSION) ?: 'jpg';
+        
         $originalPath = $this->storage->storeUploadedFile($uploadedFile, 'originals', $extension);
-        
-        $thumbRelativePath = 'thumbs/' . \bin2hex(\random_bytes(16)) . '.jpg';
-        $absoluteThumbPath = $this->storage->getPath('thumbs', \basename($thumbRelativePath));
-        
-        if (!\is_dir(\dirname($absoluteThumbPath))) {
-            \mkdir(\dirname($absoluteThumbPath), 0755, true);
-        }
 
-        [$origCat, $origFile] = \explode('/', $originalPath, 2);
-        $absoluteOriginal = $this->storage->getPath($origCat, $origFile);
-        
-        $this->generateThumbnail($absoluteOriginal, $absoluteThumbPath);
-        
-        return ['original' => $originalPath, 'thumb' => $thumbRelativePath];
+        $tmpThumb = tempnam(sys_get_temp_dir(), 'diffrakt_thumb_');
+        $this->generateThumbnail($uploadedFile['tmp_name'], $tmpThumb);
+
+        $thumbKey = 'thumbs/' . \bin2hex(\random_bytes(16)) . '.jpg';
+        $this->storage->putFile($thumbKey, $tmpThumb, 'image/jpeg');
+        unlink($tmpThumb);
+
+        return ['original' => $originalPath, 'thumb' => $thumbKey];
     }
 
     public function generateThumbnail(string $sourceFile, string $destFile): void {
-        if (!\file_exists($sourceFile)) {
-            throw new \RuntimeException('Source file does not exist.');
-        }
-
-        $mime = \mime_content_type($sourceFile);
-        
         $image = \imagecreatefromstring(\file_get_contents($sourceFile));
 
         if (!$image) {
