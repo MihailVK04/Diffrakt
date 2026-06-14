@@ -25,6 +25,7 @@ CREATE TABLE posts (
     thumb_path VARCHAR(255) NOT NULL,
     processed_path VARCHAR(255) NULL DEFAULT NULL,
     caption TEXT NULL,
++   is_published TINYINT(1) NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
