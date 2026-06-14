@@ -45,7 +45,8 @@ class UserController {
 
         $avatarUrl = null;
         if ($user['avatar_path']) {
-            $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
+            $storage   = new \Diffrakt\Services\StorageService();
+            $avatarUrl = $storage->url($user['avatar_path']);
         }
         $user['avatar_url'] = $avatarUrl;
         unset($user['avatar_path']);
@@ -65,10 +66,10 @@ class UserController {
         $limit = $request->input('limit') ? (int)$request->input('limit') : 10;
 
         $posts = Post::getUserPosts((int)$user['id'], $cursor, $limit);
-
+        $storage = new \Diffrakt\Services\StorageService(); 
         foreach ($posts as &$post) {
             $displayPath = $post['processed_path'] ?? $post['thumb_path'];
-            $post['thumb_url'] = 'api/v1/files?path=' . urlencode($displayPath);
+            $post['thumb_url'] = $storage->url($displayPath);
             
             $post['like_count'] = (int)($post['like_count'] ?? 0);
             $post['comment_count'] = (int)($post['comment_count'] ?? 0);
@@ -112,7 +113,8 @@ class UserController {
         }
 
         $user = User::findById($request->userId());
-        $avatarUrl = null;
+        $storage   = new \Diffrakt\Services\StorageService();
+        $avatarUrl = $storage->url($user['avatar_path']);
         if ($user['avatar_path']) {
             $avatarUrl = 'api/v1/files?path=' . urlencode($user['avatar_path']);
         }

@@ -10,37 +10,36 @@ class ImageService {
         $this->storage = $storage;
     }
 
-    public function processUpload(array $uploadedFile): array {
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->file($uploadedFile['tmp_name']);
-        $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        
-        if (!\in_array($mime, $allowed)) {
-            throw new \InvalidArgumentException('Invalid file type.');
-        }
+   public function processUpload(array $uploadedFile): array {
+    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+    $mime  = $finfo->file($uploadedFile['tmp_name']);
 
-        $info = \getimagesize($uploadedFile['tmp_name']);
-        if ($info && ($info[0] * $info[1] > 20000000)) { 
-            throw new \RuntimeException('Image too large for processing.');
-        }
-
-        $extension = \pathinfo($uploadedFile['name'], PATHINFO_EXTENSION) ?: 'jpg';
-        $originalPath = $this->storage->storeUploadedFile($uploadedFile, 'originals', $extension);
-        
-        $thumbRelativePath = 'thumbs/' . \bin2hex(\random_bytes(16)) . '.jpg';
-        $absoluteThumbPath = $this->storage->getPath('thumbs', \basename($thumbRelativePath));
-        
-        if (!\is_dir(\dirname($absoluteThumbPath))) {
-            \mkdir(\dirname($absoluteThumbPath), 0755, true);
-        }
-
-        [$origCat, $origFile] = \explode('/', $originalPath, 2);
-        $absoluteOriginal = $this->storage->getPath($origCat, $origFile);
-        
-        $this->generateThumbnail($absoluteOriginal, $absoluteThumbPath);
-        
-        return ['original' => $originalPath, 'thumb' => $thumbRelativePath];
+    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp', 'image/gif'])) {
+        throw new \InvalidArgumentException('Invalid file type.');
     }
+
+    $info = getimagesize($uploadedFile['tmp_name']);
+    if ($info && ($info[0] * $info[1] > 20_000_000)) {
+        throw new \RuntimeException('Image too large for processing.');
+    }
+
+    $extension = pathinfo($uploadedFile['name'], PATHINFO_EXTENSION) ?: 'jpg';
+
+    $originalKey = $this->storage->storeUploadedFile($uploadedFile, 'originals', $extension);
+
+    $tempOriginal = $this->storage->downloadTemp($originalKey);
+
+    $tempThumb = tempnam(sys_get_temp_dir(), 'diffrakt_thumb_') . '.jpg';
+    $this->generateThumbnail($tempOriginal, $tempThumb);
+
+    $thumbKey = 'thumbs/' . bin2hex(random_bytes(16)) . '.jpg';
+    $this->storage->putFile($thumbKey, $tempThumb, 'image/jpeg');
+
+    @unlink($tempOriginal);
+    @unlink($tempThumb);
+
+    return ['original' => $originalKey, 'thumb' => $thumbKey];
+}
 
     public function generateThumbnail(string $sourceFile, string $destFile): void {
         if (!\file_exists($sourceFile)) {

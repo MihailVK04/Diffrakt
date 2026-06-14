@@ -36,7 +36,7 @@ class PostController {
             Response::json([
                 'message' => 'Post uploaded successfully',
                 'id' => $postId,
-                'thumb_url' => 'api/v1/files?path=' . urlencode($paths['thumb'])
+                'thumb_url' => $storage->url($paths['thumb'])
             ], 201);
 
         } catch (\Exception $e) {
@@ -45,21 +45,20 @@ class PostController {
     }
 
     public function get(Request $request): void {
-        $id = (int)($request->params['id'] ?? 0);
+        $id   = (int)($request->params['id'] ?? 0);
         $post = Post::findById($id, $request->userId());
-        if (!$post) {
-            Response::notFound('Post not found.');
-        }
+        if (!$post) Response::notFound('Post not found.');
 
+        $storage     = new StorageService(); 
         $displayPath = $post['processed_path'] ?? $post['thumb_path'];
-        $post['thumb_url'] = 'api/v1/files?path=' . urlencode($displayPath);
+        $post['thumb_url']    = $storage->url($displayPath);                   
         if ($post['processed_path']) {
-            $post['processed_url'] = 'api/v1/files?path=' . urlencode($post['processed_path']);
+            $post['processed_url'] = $storage->url($post['processed_path']);     
         }
-        $post['original_url'] = 'api/v1/files?path=' . urlencode($post['original_path']);
-        $post['like_count'] = (int)($post['like_count'] ?? 0);
+        $post['original_url'] = $storage->url($post['original_path']);          
+        $post['like_count']    = (int)($post['like_count'] ?? 0);
         $post['comment_count'] = (int)($post['comment_count'] ?? 0);
-        
+
         Response::json(['post' => $post]);
     }
 
@@ -138,7 +137,7 @@ class PostController {
 
             Response::json([
                 'message' => 'Export complete.',
-                'download_url' => 'api/v1/files?path=' . urlencode($downloadPath)
+                'download_url' => $storage->url($downloadPath)
             ]);
         } catch (\Exception $e) {
             Response::badRequest('Export failed: ' . $e->getMessage());

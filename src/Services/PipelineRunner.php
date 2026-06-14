@@ -26,25 +26,20 @@ class PipelineRunner {
     }
 
     public function run(string $originalPath, int $pipelineId): string {
-        [$sourceCategory, $sourceFilename] = \explode('/', $originalPath, 2);
-        $absoluteSource = $this->storage->getPath($sourceCategory, $sourceFilename);
-        
-        if (!\file_exists($absoluteSource)) {
-            throw new \RuntimeException('Source file not found.');
-        }
+        $tempSource = $this->storage->downloadTemp($originalPath);
 
-        $processedFilename = \bin2hex(\random_bytes(16)) . '.jpg';
-        $relativePath = 'processed/' . $processedFilename;
-        $absoluteDest = $this->storage->getPath('processed', $processedFilename);
+        $tempProcessed = tempnam(sys_get_temp_dir(), 'diffrakt_proc_') . '.jpg';
+        copy($tempSource, $tempProcessed);
 
-        if (!\is_dir(\dirname($absoluteDest))) {
-            \mkdir(\dirname($absoluteDest), 0755, true);
-        }
+        $this->runAbsolute($tempProcessed, $pipelineId);
 
-        \copy($absoluteSource, $absoluteDest);
-        $this->runAbsolute($absoluteDest, $pipelineId);
+        $processedKey = 'processed/' . bin2hex(random_bytes(16)) . '.jpg';
+        $this->storage->putFile($processedKey, $tempProcessed, 'image/jpeg');
 
-        return $relativePath;
+        @unlink($tempSource);
+        @unlink($tempProcessed);
+
+        return $processedKey;
     }
 
     public function runAbsolute(string $absolutePath, int $pipelineId): void {
