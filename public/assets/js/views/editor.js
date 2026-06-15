@@ -359,10 +359,17 @@ export class EditorView {
             try {
                 const result = await api.posts.export(this._postId, this._pipeline.id);
 
+                const fileResp = await fetch(result.download_url);
+                const blob = await fileResp.blob();
+                const blobUrl = URL.createObjectURL(blob);
+
                 const a = document.createElement('a');
-                a.href = result.download_url;
+                a.href = blobUrl;
                 a.download = `diffrakt-export-${this._postId}.jpg`;
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
 
                 this._showToast('Export ready — downloading.');
             } catch (err) {
