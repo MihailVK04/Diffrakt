@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+ini_set('memory_limit', '512M');
+
 $env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'development';
 
 if ($env === 'production') {
