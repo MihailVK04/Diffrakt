@@ -14,6 +14,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY composer.json composer.lock /var/www/diffrakt/
 WORKDIR /var/www/diffrakt
 RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/memory.ini
  
 COPY public/ /var/www/diffrakt/public/
 COPY src/ /var/www/diffrakt/src/
