@@ -25,23 +25,38 @@ class Post {
         return $db->execute('DELETE FROM posts WHERE id = ? AND user_id = ?', [$id, $userId]);
     }
 
-    public static function getFeed(int $userId, ?int $cursorId = null, int $limit = 10): array {
+    public static function getFeed(int $userId, ?int $cursorId = null, int $limit = 10, string $scope = 'following'): array {
         $db = Database::getInstance();
-        $params = [$userId];
+        $params = [];
         $cursorQuery = '';
-        
+
+        if ($scope === 'all') {
+            $joinAndWhere = '
+                LEFT JOIN follows f ON f.followee_id = p.user_id AND f.follower_id = ?
+                WHERE (p.user_id = ? OR f.follower_id IS NOT NULL) AND p.is_published = 1
+            ';
+            $params[] = $userId;
+            $params[] = $userId;
+        } else {
+            $joinAndWhere = '
+                JOIN follows f ON f.followee_id = p.user_id
+                WHERE f.follower_id = ? AND p.is_published = 1
+            ';
+            $params[] = $userId;
+        }
+
         if ($cursorId !== null) {
             $cursorQuery = ' AND p.id < ?';
             $params[] = $cursorId;
         }
         $params[] = $limit;
-        
+
         return $db->fetchAll("
-            SELECT p.*, u.username, u.avatar_path 
+            SELECT p.*, u.username, u.avatar_path
             FROM posts p
             JOIN users u ON p.user_id = u.id
-            JOIN follows f ON f.followee_id = p.user_id
-            WHERE f.follower_id = ? AND p.is_published = 1 $cursorQuery
+            $joinAndWhere
+            $cursorQuery
             ORDER BY p.id DESC
             LIMIT ?
         ", $params);

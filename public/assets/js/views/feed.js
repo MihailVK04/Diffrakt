@@ -6,6 +6,7 @@ export class FeedView {
         this._container = container;
         this._params = params;
 
+        this._scope = 'following';
         this._cursor = null;
         this._hasMore = true;
         this._loading = false;
@@ -20,6 +21,11 @@ export class FeedView {
         this._sentinel = this._container.querySelector('[id="feed-sentinel"]');
         this._emptyMsg = this._container.querySelector('[id="feed-empty"]');
         this._errorMsg = this._container.querySelector('[id="feed-error"]');
+        this._toggleBtn = this._container.querySelector('[id="feed-scope-toggle"]');
+
+        this._toggleBtn.addEventListener('click', () => {
+            this._setScope(this._scope === 'following' ? 'all' : 'following');
+        });
 
         this._observer = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting) {
@@ -41,6 +47,41 @@ export class FeedView {
         }
     }
 
+    _setScope(scope) {
+        if (this._loading) {
+            return;
+        }
+
+        if (this._abortCtrl) {
+            this._abortCtrl.abort();
+            this._abortCtrl = null;
+        }
+
+        this._scope = scope;
+        this._cursor = null;
+        this._hasMore = true;
+
+        this._list.innerHTML = '';
+        this._hideError();
+        this._emptyMsg.hidden = true;
+
+        this._toggleBtn.textContent = scope === 'all'
+            ? 'Show: Following + Me'
+            : 'Show: Following only';
+        this._toggleBtn.setAttribute('aria-pressed', scope === 'all' ? 'true' : 'false');
+
+        if (!this._observer) {
+            this._observer = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    this._loadPage();
+                }
+            });
+        }
+        this._observer.observe(this._sentinel);
+
+        this._loadPage();
+    }
+
     async _loadPage() {
         if (this._loading || !this._hasMore) {
             return;
@@ -52,7 +93,7 @@ export class FeedView {
         this._abortCtrl = new AbortController();
 
         try {
-            const data = await api.feed.get(this._cursor);
+            const data = await api.feed.get(this._cursor, this._scope, { signal: this._abortCtrl.signal });
             const posts = data.posts ?? [];
             const nextCursor = data.next_cursor ?? null;
 
@@ -115,7 +156,15 @@ export class FeedView {
     _buildShellHTML() {
         return `
 <main class="feed">
-    <h1 class="feed__title">Feed</h1>
+    <div class="feed__header">
+        <h1 class="feed__title">Feed</h1>
+        <button
+            id="feed-scope-toggle"
+            type="button"
+            class="btn btn--ghost feed__scope-toggle"
+            aria-pressed="false"
+        >Show: Following only</button>
+    </div>
  
     <ul id="feed-list" class="feed__list"></ul>
  

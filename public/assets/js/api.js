@@ -187,9 +187,13 @@ const pipelines = {
 
 const feed = {
     
-    get(cursor = null) {
-        const qs = cursor !== null ? `?cursor=${cursor}` : '';
-        return get(`/feed${qs}`);
+    get(cursor = null, scope = 'following', opts = {}) {
+        const params = new URLSearchParams();
+        if (cursor !== null) params.set('cursor', cursor);
+        if (scope === 'all') params.set('scope', 'all');
+
+        const qs = params.toString();
+        return get(`/feed${qs ? '?' + qs : ''}`, opts);
     },
 };
 
