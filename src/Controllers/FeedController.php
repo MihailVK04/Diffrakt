@@ -10,11 +10,12 @@ use Diffrakt\Models\Post;
 class FeedController {
     public function index(Request $request): void {
         $userId = $request->userId();
-        $cursor = $request->input('cursor') ? (int)$request->input('cursor') : null;
-        $limit = $request->input('limit') ? (int)$request->input('limit') : 10;
+        $cursor = $request->query('cursor') ? (int)$request->query('cursor') : null;
+        $limit = $request->query('limit') ? (int)$request->query('limit') : 10;
+        $scope = $request->query('scope') === 'all' ? 'all' : 'following';
 
-        $posts = Post::getFeed($userId, $cursor, $limit + 1);
-        
+        $posts = Post::getFeed($userId, $cursor, $limit + 1, $scope);
+
         $nextCursor = null;
         if (count($posts) > $limit) {
             array_pop($posts);

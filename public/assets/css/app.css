@@ -568,6 +568,33 @@ input, textarea, select {
     height: 1px;
     visibility: hidden;
 }
+
+.feed__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-3);
+    border-bottom: 0.125rem solid var(--color-border);
+}
+
+.feed__header .feed__title {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.feed__scope-toggle {
+    flex-shrink: 0;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-xs);
+}
+
+.feed__scope-toggle[aria-pressed="true"] {
+    background-color: var(--color-navy);
+    color: var(--color-text-on-dark);
+}
  
  
 .profile {
