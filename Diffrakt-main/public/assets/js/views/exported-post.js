@@ -1,6 +1,6 @@
 import api from '../api.js';
 
-export class PostView {
+export class ExportedPostView {
 
     constructor(container, params) {
         this._container = container;
@@ -8,6 +8,9 @@ export class PostView {
     }
 
     async render() {
+        const nav = document.getElementById('nav');
+        if (nav) nav.style.display = 'none';
+
         this._container.innerHTML = `<main class="post-view"><p>Loading…</p></main>`;
 
         try {
@@ -19,8 +22,7 @@ export class PostView {
             const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${BASE}/${imageUrl.replace(/^\//, '')}`;
 
             this._container.innerHTML = `
-<main class="post-view">
-    <button class="btn btn--ghost post-view__back" id="post-back">← Back</button>
+<main class="post-view" style="padding-top: 2rem;">
     <figure class="post-view__figure">
         <img
             class="post-view__image"
@@ -31,16 +33,15 @@ export class PostView {
     </figure>
 </main>`;
 
-            this._container.querySelector('#post-back').addEventListener('click', () => {
-                history.back();
-            });
-
         } catch (err) {
             this._container.innerHTML = `<main class="post-view"><p class="post-view__error">${this._esc(err.message ?? 'Could not load post.')}</p></main>`;
         }
     }
 
-    destroy() {}
+    destroy() {
+        const nav = document.getElementById('nav');
+        if (nav) nav.style.display = '';
+    }
 
     _esc(value) {
         return String(value)

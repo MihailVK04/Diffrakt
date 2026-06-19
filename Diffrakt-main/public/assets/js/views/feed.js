@@ -12,6 +12,7 @@ export class FeedView {
         this._loading = false;
         this._abortCtrl = null;
         this._observer = null;
+        this._loadedPosts = [];
     }
 
     async render() {
@@ -22,9 +23,71 @@ export class FeedView {
         this._emptyMsg = this._container.querySelector('[id="feed-empty"]');
         this._errorMsg = this._container.querySelector('[id="feed-error"]');
         this._toggleBtn = this._container.querySelector('[id="feed-scope-toggle"]');
+        
+        this._exportBtn = this._container.querySelector('[id="feed-export-btn"]');
+        this._exportInput = this._container.querySelector('[id="export-count"]');
+
+        this._exportInput.addEventListener('input', () => {
+            const max = this._loadedPosts.length;
+            let val = parseInt(this._exportInput.value, 10);
+            if (val > max) {
+                this._exportInput.value = max;
+            }
+        });
 
         this._toggleBtn.addEventListener('click', () => {
             this._setScope(this._scope === 'following' ? 'all' : 'following');
+        });
+
+        this._exportBtn.addEventListener('click', () => {
+            if (this._loadedPosts.length === 0) {
+                alert("Няма заредени постове за експорт.");
+                return;
+            }
+
+            const count = parseInt(this._exportInput.value, 10);
+            
+            if (isNaN(count) || count <= 0) {
+                alert("Моля, въведете валидно число, по-голямо от 0.");
+                return;
+            }
+
+            const limit = Math.min(count, this._loadedPosts.length);
+            const postsToExport = this._loadedPosts.slice(0, limit);
+
+            const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
+            const currentOrigin = window.location.origin;
+
+            const linksHTML = postsToExport.map(post => {
+                const url = `${currentOrigin}${BASE}/exported-post/${post.id}`;
+                const date = new Date(post.created_at).toLocaleString();
+                return `<li><a href="${url}" target="_blank">Post by ${this._esc(post.author.username)} (${date})</a></li>`;
+            }).join('');
+
+            const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Exported Posts</title>
+</head>
+<body>
+<h1>Exported Posts Links</h1>
+<ul>
+${linksHTML}
+</ul>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `diffrakt_export.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
         });
 
         this._observer = new IntersectionObserver(entries => {
@@ -48,9 +111,7 @@ export class FeedView {
     }
 
     _setScope(scope) {
-        if (this._loading) {
-            return;
-        }
+        if (this._loading) return;
 
         if (this._abortCtrl) {
             this._abortCtrl.abort();
@@ -60,6 +121,10 @@ export class FeedView {
         this._scope = scope;
         this._cursor = null;
         this._hasMore = true;
+        
+        this._loadedPosts = [];
+        this._exportInput.max = 0;
+        this._exportInput.value = 1;
 
         this._list.innerHTML = '';
         this._hideError();
@@ -83,9 +148,7 @@ export class FeedView {
     }
 
     async _loadPage() {
-        if (this._loading || !this._hasMore) {
-            return;
-        }
+        if (this._loading || !this._hasMore) return;
 
         this._loading = true;
         this._hideError();
@@ -100,6 +163,8 @@ export class FeedView {
             if (posts.length === 0 && this._cursor === null) {
                 this._showEmpty();
             } else {
+                this._loadedPosts.push(...posts);
+                this._exportInput.max = this._loadedPosts.length;
                 this._appendPosts(posts);
             }
 
@@ -112,13 +177,8 @@ export class FeedView {
             }
 
         } catch (err) {
-            
-            if (err.name === 'AbortError') {
-                return;
-            }
-
+            if (err.name === 'AbortError') return;
             this._showError(err.message ?? 'Could not load feed. Please try again.');
-
         } finally {
             this._loading = false;
             this._abortCtrl = null;
@@ -132,7 +192,6 @@ export class FeedView {
             const li = document.createElement('li');
             li.className = 'feed__item';
             li.innerHTML = this._buildPostHTML(post);
-
             fragment.appendChild(li);
         }
 
@@ -156,24 +215,33 @@ export class FeedView {
     _buildShellHTML() {
         return `
 <main class="feed">
-    <div class="feed__header">
-        <h1 class="feed__title">Feed</h1>
-        <button
-            id="feed-scope-toggle"
-            type="button"
-            class="btn btn--ghost feed__scope-toggle"
-            aria-pressed="false"
-        >Show: Following only</button>
+    <div class="feed__header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h1 class="feed__title" style="margin: 0;">Feed</h1>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <label for="export-count" style="font-size: 0.9rem;">Export top:</label>
+            <input type="number" id="export-count" min="1" max="0" value="1" style="width: 60px; padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px;" />
+            <button
+                id="feed-export-btn"
+                type="button"
+                class="btn btn--primary"
+            >Export</button>
+            <button
+                id="feed-scope-toggle"
+                type="button"
+                class="btn btn--ghost feed__scope-toggle"
+                aria-pressed="false"
+            >Show: Following only</button>
+        </div>
     </div>
- 
+
     <ul id="feed-list" class="feed__list"></ul>
- 
+
     <p id="feed-empty" class="feed__empty" hidden>
         Nothing here yet — follow some users to see their posts.
     </p>
- 
+
     <p id="feed-error" class="feed__error" aria-live="polite" hidden></p>
- 
+
     <div id="feed-sentinel" class="feed__sentinel" aria-hidden="true"></div>
 </main>`;
     }
@@ -184,7 +252,7 @@ export class FeedView {
         const authorUrl = `/profile/${encodeURIComponent(post.author.username)}`;
         const postUrl = `/post/${encodeURIComponent(post.id)}`;
 
-        const thumbUrl  = post.thumb_url?.startsWith('http')
+        const thumbUrl = post.thumb_url?.startsWith('http')
             ? post.thumb_url
             : `${BASE}/${(post.thumb_url ?? '').replace(/^\//, '')}`;
 
@@ -208,12 +276,12 @@ export class FeedView {
             ? `<p class="feed__caption">${this._esc(post.caption)}</p>`
             : '';
 
-        const date      = new Date(post.created_at);
-        const dateISO   = date.toISOString();
+        const date = new Date(post.created_at);
+        const dateISO = date.toISOString();
         const dateLabel = date.toLocaleDateString(undefined, {
             year: 'numeric', month: 'short', day: 'numeric',
         });
- 
+
         return `
 <article class="feed__card">
     <header class="feed__card-header">
@@ -223,7 +291,7 @@ export class FeedView {
         </a>
         <time class="feed__date" datetime="${dateISO}">${dateLabel}</time>
     </header>
- 
+
     <a class="feed__image-link" href="${this._esc(postUrl)}" data-link>
         <img
             class="feed__image"
@@ -232,7 +300,7 @@ export class FeedView {
             loading="lazy"
         >
     </a>
- 
+
     ${captionHTML}
 </article>`;
     }

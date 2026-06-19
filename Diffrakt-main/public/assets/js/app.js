@@ -5,6 +5,7 @@ import { EditorView } from './views/editor.js';
 import { ProfileView } from './views/profile.js';
 import { HomeView } from './views/home.js';
 import { PostView } from './views/post.js';
+import { ExportedPostView } from './views/exported-post.js';
 
 const BASE = (document.querySelector('base')?.getAttribute('href') ?? '/').replace(/\/$/, '');
 
@@ -15,6 +16,7 @@ const ROUTES = [
     { pattern: '/editor/:postId', view: EditorView, auth: true},
     { pattern: '/profile/:username', view: ProfileView, auth: false},
     { pattern: '/post/:postId', view: PostView, auth: false},
+    { pattern: '/exported-post/:postId', view: ExportedPostView, auth: false},
 ];
 
 let _currentView = null;
@@ -134,10 +136,10 @@ function navigate(path, _state = {}) {
 function handleLinkClick(e) {
     const anchor = e.target.closest('a[data-link]');
     if (!anchor) return;
- 
+
     const href = anchor.getAttribute('href');
     if (!href || href.startsWith('http') || href.startsWith('//')) return;
- 
+
     e.preventDefault();
     navigate(href);
 }
